@@ -1,7 +1,7 @@
 import pygame
 from game import main_loop
 import constants
-from data_manager import DataStore
+from profiles.data_manager import DataStore
 
 if __name__ == "__main__":
     pygame.init()

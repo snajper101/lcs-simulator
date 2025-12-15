@@ -23,20 +23,23 @@ def create_main_menu( manager: pygame_gui.UIManager ) -> tuple[pygame_elements.U
     
     return ( play_button, leaderboard_button, settings_button )
 
-def create_maps_menu( manager: pygame_gui.UIManager ) -> tuple[pygame_elements.UIButton, pygame_elements.UIButton, pygame_elements.UIButton]:
-    map_slider = pygame_gui.elements.UIHorizontalSlider(
-        relative_rect=pygame.Rect((constants.MAIN_WIN_WIDTH - 300) // 2, 200, 300,25 ),
-        start_value=0, value_range=(0, len(maps.MAPS) - 1), manager=manager
+def create_maps_menu( manager: pygame_gui.UIManager ) -> pygame_elements.UIButton:
+    pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect(200, 200, 50, 50), text="<", manager=manager
     )
-
+    
+    pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect(550, 200, 50, 50), text=">", manager=manager
+    )
+    
     map_label = pygame_gui.elements.UILabel(
         relative_rect=pygame.Rect((constants.MAIN_WIN_WIDTH - 300) // 2, 240, 300, 30 ),
         text=f"Mapa: {maps.MAPS[0]}", manager=manager
     )
 
-    back_button = pygame_gui.elements.UIButton(
+    pygame_gui.elements.UIButton(
         relative_rect=pygame.Rect((constants.MAIN_WIN_WIDTH - 150) // 2, 300, 150, 40 ),
         text="Powrót", manager=manager
     )
-
-    return map_slider, map_label, back_button
+    
+    return map_label

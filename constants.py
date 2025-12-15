@@ -6,4 +6,4 @@ FPS_LIMIT = 60
 BUTTON_WIDTH = 200
 BUTTON_HEIGHT = 40
 
-DATA_SAVE_FILENAME = "player_profile.json"
+DATA_SAVE_FILENAME = "data/player_profile.json"
