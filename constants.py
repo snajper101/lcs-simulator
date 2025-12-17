@@ -14,3 +14,4 @@ class Constants:
     }
 
     MAX_POINTS = 1000
+    MAP_SIZE = 25

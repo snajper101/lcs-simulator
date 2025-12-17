@@ -34,7 +34,7 @@ def create_maps_menu( manager: pygame_gui.UIManager ) -> pygame_elements.UIButto
     
     map_label = pygame_gui.elements.UILabel(
         relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - 300) // 2, 240, 300, 30 ),
-        text=f"Mapa: {maps.MAPS[0]}", manager=manager
+        text=f"Mapa: {maps.get_available_maps()[0]}", manager=manager
     )
 
     pygame_gui.elements.UIButton(

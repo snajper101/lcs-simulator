@@ -36,11 +36,11 @@ def main_loop(window_surface : pygame.surface):
                         state = "settings"
                 elif state == "map_select":
                     if event.ui_element.text == ">":
-                        map_index = (map_index + 1) % len(maps.MAPS)
-                        map_label.set_text(maps.MAPS[map_index])
+                        map_index = (map_index + 1) % len(maps.get_available_maps())
+                        map_label.set_text(maps.get_available_maps()[map_index])
                     elif event.ui_element.text == "<":
-                        map_index = (map_index - 1) % len(maps.MAPS)
-                        map_label.set_text(maps.MAPS[map_index])
+                        map_index = (map_index - 1) % len(maps.get_available_maps())
+                        map_label.set_text(maps.get_available_maps()[map_index])
                     elif event.ui_element.text == "Powrót":
                         ui_manager.clear_and_reset()
                         state = "menu"
