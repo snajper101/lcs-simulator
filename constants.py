@@ -1,9 +1,16 @@
-MAIN_WIN_WIDTH = 1200
-MAIN_WIN_HEIGHT = 800
+class Constants:
+    MAIN_WIN_WIDTH = 1200
+    MAIN_WIN_HEIGHT = 800
 
-FPS_LIMIT = 60
+    FPS_LIMIT = 60
 
-BUTTON_WIDTH = 200
-BUTTON_HEIGHT = 40
+    BUTTON_WIDTH = 200
+    BUTTON_HEIGHT = 40
 
-DATA_SAVE_FILENAME = "data/player_profile.json"
+    DATA_SAVE_FILENAME = "data/player_profile.json"
+
+    DEFAULT_DATA = {
+        "stats": {}
+    }
+
+    MAX_POINTS = 1000
