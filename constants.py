@@ -14,4 +14,8 @@ class Constants:
     }
 
     MAX_POINTS = 1000
-    MAP_SIZE = 25
+    TILE_SIZE = 32
+    BG_COLOR = (10, 10, 10)
+    GRID_OFFSET_X = 50
+    GRID_OFFSET_Y = 100
+    TRACK_COLOR = (150, 150, 150)
