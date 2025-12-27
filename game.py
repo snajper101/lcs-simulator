@@ -21,6 +21,12 @@ def main_loop(window_surface : pygame.surface):
     play_button, leaderboard_button, settings_button = interface.create_main_menu(ui_manager)
     map_index = 0
     
+    camera_x = Constants.GRID_OFFSET_X
+    camera_y = Constants.GRID_OFFSET_Y
+    
+    is_dragging = False
+    last_mouse_pos = (0, 0)
+    
     while running:
         time_delta: float = clock.tick(Constants.FPS_LIMIT) / 1000.0
         
@@ -30,6 +36,23 @@ def main_loop(window_surface : pygame.surface):
                 
             ui_manager.process_events(event)
             
+            if state == "game":
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 2:
+                        is_dragging = True
+                        last_mouse_pos = event.pos
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if event.button == 2:
+                        is_dragging = False
+                elif event.type == pygame.MOUSEMOTION:
+                    if is_dragging:
+                        mx, my = event.pos
+                        dx = mx - last_mouse_pos[0]
+                        dy = my - last_mouse_pos[1]
+                        camera_x += dx
+                        camera_y += dy
+                        last_mouse_pos = (mx, my)
+
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if state == "menu":
                     if event.ui_element == play_button:
@@ -54,6 +77,8 @@ def main_loop(window_surface : pygame.surface):
                     elif event.ui_element.text == "Uruchom":
                         ui_manager.clear_and_reset()
                         state = "game"
+                        camera_x = Constants.GRID_OFFSET_X
+                        camera_y = Constants.GRID_OFFSET_Y
                         simulator.load_map(stations.brzozowa_dolina.SCHEMA)
                 elif state == "game":
                     pass
@@ -63,12 +88,20 @@ def main_loop(window_surface : pygame.surface):
         window_surface.fill((0, 0, 0))
         
         if state == "game":
-            renderer.draw_map(window_surface, simulator.current_map_data)
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                camera_x += Constants.CAMERA_MOVE_SPEED * time_delta
+            if keys[pygame.K_RIGHT]:
+                camera_x -= Constants.CAMERA_MOVE_SPEED * time_delta
+            if keys[pygame.K_UP]:
+                camera_y += Constants.CAMERA_MOVE_SPEED * time_delta
+            if keys[pygame.K_DOWN]:
+                camera_y -= Constants.CAMERA_MOVE_SPEED * time_delta
+
+            mouse_pos = pygame.mouse.get_pos()
+            renderer.draw_map(window_surface, simulator.current_map_data, (camera_x, camera_y), mouse_pos)
         
         ui_manager.update(time_delta)
         ui_manager.draw_ui(window_surface)
         
         pygame.display.update()
-            
-        
-        
