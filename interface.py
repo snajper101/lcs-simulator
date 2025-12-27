@@ -42,7 +42,7 @@ def create_maps_menu( manager: pygame_gui.UIManager ) -> pygame_elements.UIButto
         text="Powrót", manager=manager
     )
     
-    start_button = pygame_gui.elements.UIButton(
+    pygame_gui.elements.UIButton(
         relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - 150) // 2, 350, 150, 40), 
         text="Uruchom", manager=manager
     )
