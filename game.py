@@ -5,7 +5,7 @@ import interface
 import maps
 from simulation.simulator import Simulator
 from simulation.renderer import GameRenderer
-import stations.brzozowa_dolina
+import stations.brzozowa_dolina, stations.kamieniec, stations.nowe_zelazno
 
 def main_loop(window_surface : pygame.surface):
     clock: pygame.time.Clock = pygame.time.Clock()
@@ -79,7 +79,7 @@ def main_loop(window_surface : pygame.surface):
                         state = "game"
                         camera_x = Constants.GRID_OFFSET_X
                         camera_y = Constants.GRID_OFFSET_Y
-                        simulator.load_map(stations.brzozowa_dolina.SCHEMA)
+                        simulator.load_map(stations.nowe_zelazno.SCHEMA)
                 elif state == "game":
                     pass
                 elif state == "settings":

@@ -190,7 +190,7 @@ SCHEMA = {
             "TextLabels": {
                 "PlayerName": "Dyżurny ruchu: ISEDR Xyz",
                 "Miejscowy": "MIEJSCOWY",
-                "StationName": "GRODZISK MAZOWIECKI",
+                "StationName": "Nowe Żelazno",
             },
         }
     ],

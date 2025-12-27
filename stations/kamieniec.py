@@ -246,7 +246,7 @@ SCHEMA = {
             "TextLabels": {
                 "PlayerName": "Dyżurny ruchu: ISEDR Xyz",
                 "Miejscowy": "MIEJSCOWY",
-                "StationName": "CZERMIN",
+                "StationName": "KAMIENIEC",
             },
         }
     ],
