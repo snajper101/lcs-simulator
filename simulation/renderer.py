@@ -9,7 +9,7 @@ class GameRenderer:
         self.small_font = pygame.font.SysFont("Arial", 10)
         self.sem_font = pygame.font.SysFont("Arial", 14, bold=True)
         
-    def draw_map(self, surface: pygame.Surface, map_data: dict, camera_offset: tuple, mouse_pos: tuple = None) -> None:
+    def draw_map(self, surface: pygame.Surface, map_data: dict, camera_offset: tuple, mouse_pos: tuple = None, pressed_pos : tuple = None) -> None:
         surface.fill(Constants.BG_COLOR)
         
         cam_x, cam_y = camera_offset
@@ -50,6 +50,7 @@ class GameRenderer:
                     end_pos = (center_x + half_width, cy)
                     real_cx = center_x
                     pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos, end_pos, Constants.ISOLATION_WIDTH)
+                    rect = pygame.Rect(center_x - half_width, screen_y, 2 * half_width, Constants.TILE_SIZE)
                 elif "Vertical" in elem_name:
                     offset = element.get("Offset") or (0, 25)
                     size = element.get("Size") or (0, 50)
@@ -61,10 +62,7 @@ class GameRenderer:
                     end_pos = (cx, center_y + half_height)
                     real_cy = center_y
                     pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos, end_pos, Constants.ISOLATION_WIDTH)
-                    
-                    start_pos = (cx, rect.top)
-                    end_pos = (cx, rect.bottom)
-                    pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos, end_pos, Constants.ISOLATION_WIDTH)
+                    rect = pygame.Rect(screen_x, center_y - half_height, Constants.TILE_SIZE, 2 * half_height)
                 elif "Platform" in elem_name:
                     tileSizeHalf = Constants.TILE_SIZE // 2
                     if "North" in elem_name:
@@ -437,7 +435,9 @@ class GameRenderer:
                             bg_rect = pygame.Rect( text_rect.left - 6, text_rect.top - 4, text_rect.width + 6 * 2, text_rect.height + 4 * 2 )
                             pygame.draw.rect(surface, (0, 0, 0), bg_rect)            
                             surface.blit(text_surf, text_rect)
-
-            if mouse_pos and rect.collidepoint(mouse_pos):
-                if not "Platform" in elem_name:
-                    pygame.draw.rect(surface, (255, 255, 0), rect, 2) 
+            if pressed_pos and rect.collidepoint( pressed_pos ):
+                if not "Platform" in elem_name and not "Vertical" in elem_name and not "Curve" in elem_name:
+                    pygame.draw.rect(surface, (0, 255, 255), rect, 2, 4) 
+            elif mouse_pos and rect.collidepoint(mouse_pos):
+                if not "Platform" in elem_name and not "Vertical" in elem_name and not "Curve" in elem_name:
+                    pygame.draw.rect(surface, (255, 255, 0), rect, 2, 4) 

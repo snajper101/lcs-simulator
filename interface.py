@@ -55,3 +55,26 @@ def create_settings_menu( manager: pygame_gui.UIManager ) -> None:
         relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - 150) // 2, 300, 150, 40 ),
         text="Powrót", manager=manager
     )
+    
+def create_pause_menu(manager: pygame_gui.UIManager) -> tuple[pygame_elements.UIButton, pygame_elements.UIButton]:
+    panel_width = 300
+    panel_height = 200
+    panel_rect = pygame.Rect(
+        (Constants.MAIN_WIN_WIDTH - panel_width) // 2,
+        (Constants.MAIN_WIN_HEIGHT - panel_height) // 2,
+        panel_width,
+        panel_height
+    )
+    
+    
+    resume_button = pygame_elements.UIButton(
+        relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - 150) // 2, (Constants.MAIN_WIN_HEIGHT - 60) // 2, 150, 40),
+        text='Wznów', manager=manager
+    )
+    
+    main_menu_button = pygame_elements.UIButton(
+        relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - 150) // 2, (Constants.MAIN_WIN_HEIGHT + 60) // 2, 150, 40),
+        text='Menu Główne', manager=manager
+    )
+    
+    return resume_button, main_menu_button

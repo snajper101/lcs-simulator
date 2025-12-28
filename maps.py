@@ -13,8 +13,8 @@ class Maps:
         self.schema = self.load_schema(map)
 
     def load_schema(self, map: str) -> dict:
-        schema_module = importlib.import_module(f"stations/{map}.py")
-        return schema_module
+        schema_module = importlib.import_module(f"stations.{map}")
+        return getattr(schema_module, "SCHEMA")
 
     def load_map_data():
         pass

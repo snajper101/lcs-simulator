@@ -3,6 +3,7 @@ from constants import Constants
 import pygame_gui
 import interface
 import maps
+from maps import Maps
 from simulation.simulator import Simulator
 from simulation.renderer import GameRenderer
 import stations.brzozowa_dolina, stations.kamieniec, stations.nowe_zelazno
@@ -26,6 +27,7 @@ def main_loop(window_surface : pygame.surface):
     
     is_dragging = False
     last_mouse_pos = (0, 0)
+    last_pressed_pos = None
     
     while running:
         time_delta: float = clock.tick(Constants.FPS_LIMIT) / 1000.0
@@ -34,10 +36,20 @@ def main_loop(window_surface : pygame.surface):
             if event.type == pygame.QUIT:
                 running = False
                 
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if state == "game":
+                        state = "pause"
+                        resume_button, exit_to_menu_button = interface.create_pause_menu(ui_manager)
+                    elif state == "pause":
+                        state = "game"
+                        ui_manager.clear_and_reset()
             ui_manager.process_events(event)
             
             if state == "game":
                 if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        last_pressed_pos = event.pos
                     if event.button == 2:
                         is_dragging = True
                         last_mouse_pos = event.pos
@@ -52,7 +64,6 @@ def main_loop(window_surface : pygame.surface):
                         camera_x += dx
                         camera_y += dy
                         last_mouse_pos = (mx, my)
-
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if state == "menu":
                     if event.ui_element == play_button:
@@ -79,9 +90,19 @@ def main_loop(window_surface : pygame.surface):
                         state = "game"
                         camera_x = Constants.GRID_OFFSET_X
                         camera_y = Constants.GRID_OFFSET_Y
-                        simulator.load_map(stations.nowe_zelazno.SCHEMA)
+                        map = Maps(maps.get_available_maps()[map_index])
+                        simulator.load_map(map.schema)
                 elif state == "game":
                     pass
+                elif state == "pause":
+                    if event.ui_element == resume_button:
+                        state = "game"
+                        ui_manager.clear_and_reset()
+                    elif event.ui_element == exit_to_menu_button:
+                        state = "menu"
+                        ui_manager.clear_and_reset()
+                        simulator = Simulator() 
+                        play_button, leaderboard_button, settings_button = interface.create_main_menu(ui_manager)
                 elif state == "settings":
                     pass
                 
@@ -99,7 +120,7 @@ def main_loop(window_surface : pygame.surface):
                 camera_y -= Constants.CAMERA_MOVE_SPEED * time_delta
 
             mouse_pos = pygame.mouse.get_pos()
-            renderer.draw_map(window_surface, simulator.current_map_data, (camera_x, camera_y), mouse_pos)
+            renderer.draw_map(window_surface, simulator.current_map_data, (camera_x, camera_y), mouse_pos, last_pressed_pos)
         
         ui_manager.update(time_delta)
         ui_manager.draw_ui(window_surface)
