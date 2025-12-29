@@ -120,7 +120,7 @@ def main_loop(window_surface : pygame.surface):
                 camera_y -= Constants.CAMERA_MOVE_SPEED * time_delta
 
             mouse_pos = pygame.mouse.get_pos()
-            renderer.draw_map(window_surface, simulator.current_map_data, (camera_x, camera_y), mouse_pos, last_pressed_pos)
+            renderer.draw_map(window_surface, simulator.current_map_data, simulator.logical_elements, (camera_x, camera_y), mouse_pos, last_pressed_pos)
         
         ui_manager.update(time_delta)
         ui_manager.draw_ui(window_surface)

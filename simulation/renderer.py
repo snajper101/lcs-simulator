@@ -1,5 +1,7 @@
 import pygame
 from constants import Constants
+from typing import Dict, Tuple
+from elements.semaphore import Semaphore, SignalState, SignalType
 import math
 
 class GameRenderer:
@@ -9,7 +11,7 @@ class GameRenderer:
         self.small_font = pygame.font.SysFont("Arial", 10)
         self.sem_font = pygame.font.SysFont("Arial", 14, bold=True)
         
-    def draw_map(self, surface: pygame.Surface, map_data: dict, camera_offset: tuple, mouse_pos: tuple = None, pressed_pos : tuple = None) -> None:
+    def draw_map(self, surface: pygame.Surface, map_data: Dict, logical_elements: Dict, camera_offset: Tuple, mouse_pos: Tuple = None, pressed_pos : Tuple = None) -> None:
         surface.fill(Constants.BG_COLOR)
         
         cam_x, cam_y = camera_offset
@@ -30,6 +32,22 @@ class GameRenderer:
             rect = pygame.Rect(screen_x, screen_y, Constants.TILE_SIZE, Constants.TILE_SIZE)
             cx, cy = rect.center
             real_cx, real_cy = rect.center
+            
+            object = logical_elements.get(coord_str)
+            if object and isinstance(object, Semaphore):
+                semaphore : Semaphore = object
+                if semaphore.signal_type == SignalType.SEMI_AUTO:
+                    if semaphore.state == SignalState.S1:  
+                        sem_colour = (255, 0, 0)
+                    else:
+                        sem_colour = (0, 255, 0)
+                elif semaphore.signal_type == SignalType.REPEATER:
+                    if semaphore.advance_signal and semaphore.advance_signal.state == SignalState.S1:
+                        sem_colour = (255, 125, 0)
+                    else:
+                        sem_colour = (0, 255, 0)
+            else:
+                sem_colour = Constants.TRACK_COLOR
 
             for element in elements:
                 elem_name = element.get("Name", "")
@@ -155,8 +173,8 @@ class GameRenderer:
                             (rect.left + 10, rect.bottom - 4),
                             (rect.left + 14, rect.bottom - 4)
                         ]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_top)
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_bottom)
+                        pygame.draw.polygon(surface, sem_colour, points_top)
+                        pygame.draw.polygon(surface, sem_colour, points_bottom)
                     else:
                         points_top = [(rect.right - 10, rect.top + 4), 
                             (rect.right - 14, rect.top + 4), 
@@ -168,8 +186,8 @@ class GameRenderer:
                             (rect.right - 10, rect.bottom - 4),
                             (rect.right - 14, rect.bottom - 4)
                         ]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_top)
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_bottom)
+                        pygame.draw.polygon(surface, sem_colour, points_top)
+                        pygame.draw.polygon(surface, sem_colour, points_bottom)
                 elif "TrainShunt" in elem_name:
                     tileSizeHalf = Constants.TILE_SIZE // 2
                     if "East" in elem_name:
@@ -183,12 +201,12 @@ class GameRenderer:
                             (rect.left + 4, rect.bottom - 4),
                             (rect.left + 8, rect.bottom - 4)
                         ]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_top)
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_bottom)
+                        pygame.draw.polygon(surface, sem_colour, points_top)
+                        pygame.draw.polygon(surface, sem_colour, points_bottom)
                         points = [(rect.right - 16, rect.top + 4), 
                             (rect.right - 16, rect.bottom - 4), 
                             (rect.right - 4, cy)]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points)
+                        pygame.draw.polygon(surface, sem_colour, points)
                     else:
                         points_top = [(rect.right - 4, rect.top + 4), 
                             (rect.right - 8, rect.top + 4), 
@@ -200,24 +218,24 @@ class GameRenderer:
                             (rect.right - 4, rect.bottom - 4),
                             (rect.right - 8, rect.bottom - 4)
                         ]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_top)
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_bottom)
+                        pygame.draw.polygon(surface, sem_colour, points_top)
+                        pygame.draw.polygon(surface, sem_colour, points_bottom)
                         points = [(rect.left + 16, rect.top + 4), 
                             (rect.left + 16, rect.bottom - 4), 
                             (rect.left + 4, cy)]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points)
+                        pygame.draw.polygon(surface, sem_colour, points)
                 elif "Sem" in elem_name:
                     tileSizeHalf = Constants.TILE_SIZE // 2
                     if "West" in elem_name:
                         points = [(cx + tileSizeHalf - 8, cy - tileSizeHalf + 8), 
                             (cx + tileSizeHalf - 8, cy + tileSizeHalf - 8), 
                             (cx - tileSizeHalf + 8, cy)]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points)
+                        pygame.draw.polygon(surface, sem_colour, points)
                     elif "East" in elem_name:
                         points = [(cx - tileSizeHalf + 8, cy - tileSizeHalf + 8), 
                             (cx - tileSizeHalf + 8, cy + tileSizeHalf - 8), 
                             (cx + tileSizeHalf - 8, cy)]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points)
+                        pygame.draw.polygon(surface, sem_colour, points)
                 elif "To_" in elem_name:
                     if "East" in elem_name:
                         points_top = [(rect.left + 10, rect.top + 4), 
@@ -230,9 +248,9 @@ class GameRenderer:
                             (rect.left + 10, rect.bottom - 4),
                             (rect.left + 14, rect.bottom - 4)
                         ]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_top)
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_bottom)
-                        pygame.draw.circle(surface, Constants.TRACK_COLOR, (cx - 2, cy), 3)
+                        pygame.draw.polygon(surface, sem_colour, points_top)
+                        pygame.draw.polygon(surface, sem_colour, points_bottom)
+                        pygame.draw.circle(surface, sem_colour, (cx - 2, cy), 3)
                     else:
                         points_top = [(rect.right - 10, rect.top + 4), 
                             (rect.right - 14, rect.top + 4), 
@@ -244,9 +262,9 @@ class GameRenderer:
                             (rect.right - 10, rect.bottom - 4),
                             (rect.right - 14, rect.bottom - 4)
                         ]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_top)
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_bottom)
-                        pygame.draw.circle(surface, Constants.TRACK_COLOR, (cx + 2, cy), 3)
+                        pygame.draw.polygon(surface, sem_colour, points_top)
+                        pygame.draw.polygon(surface, sem_colour, points_bottom)
+                        pygame.draw.circle(surface, sem_colour, (cx + 2, cy), 3)
                 elif "TrackEnd_" in elem_name:
                     if "West" in elem_name:
                         pygame.draw.line(surface, Constants.TRACK_COLOR, (cx, cy), (rect.left, cy), Constants.ISOLATION_WIDTH)
