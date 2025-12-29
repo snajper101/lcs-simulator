@@ -2,6 +2,7 @@ import pygame
 from constants import Constants
 from typing import Dict, Tuple
 from elements.semaphore import Semaphore, SignalState, SignalType
+from simulation.simulator import Simulator
 import math
 
 class GameRenderer:
@@ -10,20 +11,38 @@ class GameRenderer:
         self.font = pygame.font.SysFont("Arial", 12, bold=True)
         self.small_font = pygame.font.SysFont("Arial", 10)
         self.sem_font = pygame.font.SysFont("Arial", 14, bold=True)
+  
+    def get_coordinates_from_grid(self, coord_str: str) -> Tuple | None:
+        try:
+            grid_x, grid_y = map(int, coord_str.split('-'))
+        except ValueError:
+            return None
         
-    def draw_map(self, surface: pygame.Surface, map_data: Dict, logical_elements: Dict, camera_offset: Tuple, mouse_pos: Tuple = None, pressed_pos : Tuple = None) -> None:
+        return (int(self.camera_x + (grid_x * Constants.TILE_SIZE)), int(self.camera_y + (grid_y * Constants.TILE_SIZE)))
+  
+    def draw_object_outline(self, labels : Dict, elem_name: str, rect : pygame.Rect, colour: Tuple[int, int, int]) -> None:
+        if crossing_id := labels.get("CrossingID"):
+            crossing_north = self.simulator.select_crossing_object_by_id("Crossing_North", crossing_id)
+            crossing_south = self.simulator.select_crossing_object_by_id("Crossing_South", crossing_id)
+            if crossing_north is not None and crossing_south is not None:
+                coord_north = self.get_coordinates_from_grid(crossing_north[0])
+                coord_south = self.get_coordinates_from_grid(crossing_south[0])
+                crossing_rect = pygame.Rect(coord_north[0], coord_north[1], Constants.TILE_SIZE, abs(coord_north[1] - coord_south[1]) + Constants.TILE_SIZE)
+                pygame.draw.rect(self.surface, colour, crossing_rect, 2, 4) 
+        elif not "Platform" in elem_name and not "Vertical" in elem_name and not "Curve" in elem_name:
+            pygame.draw.rect(self.surface, colour, rect, 2, 4) 
+
+  
+    def draw_map(self, surface: pygame.Surface, simulator: Simulator, camera_offset: Tuple[int, int], mouse_pos: Tuple[int, int] = None, pressed_pos : str = None) -> None:
         surface.fill(Constants.BG_COLOR)
         
-        cam_x, cam_y = camera_offset
+        self.camera_x, self.camera_y = camera_offset
+        self.simulator = simulator
+        self.surface = surface
 
-        for coord_str, elements in map_data.items():
-            try:
-                grid_x, grid_y = map(int, coord_str.split('-'))
-            except ValueError:
-                continue
+        for coord_str, elements in simulator.current_map_data.items():
             
-            screen_x = int(cam_x + (grid_x * Constants.TILE_SIZE))
-            screen_y = int(cam_y + (grid_y * Constants.TILE_SIZE))
+            screen_x, screen_y = self.get_coordinates_from_grid(coord_str)
             
             if (screen_x < -Constants.TILE_SIZE or screen_x > surface.get_width() or 
                 screen_y < -Constants.TILE_SIZE or screen_y > surface.get_height()):
@@ -33,7 +52,7 @@ class GameRenderer:
             cx, cy = rect.center
             real_cx, real_cy = rect.center
             
-            object = logical_elements.get(coord_str)
+            object = simulator.logical_elements.get(coord_str)
             if object and isinstance(object, Semaphore):
                 semaphore : Semaphore = object
                 if semaphore.signal_type == SignalType.SEMI_AUTO:
@@ -453,9 +472,8 @@ class GameRenderer:
                             bg_rect = pygame.Rect( text_rect.left - 6, text_rect.top - 4, text_rect.width + 6 * 2, text_rect.height + 4 * 2 )
                             pygame.draw.rect(surface, (0, 0, 0), bg_rect)            
                             surface.blit(text_surf, text_rect)
-            if pressed_pos and rect.collidepoint( pressed_pos ):
-                if not "Platform" in elem_name and not "Vertical" in elem_name and not "Curve" in elem_name:
-                    pygame.draw.rect(surface, (0, 255, 255), rect, 2, 4) 
+            if pressed_pos == coord_str:
+                self.draw_object_outline(labels, elem_name, rect, (0, 255, 255))
             elif mouse_pos and rect.collidepoint(mouse_pos):
                 if not "Platform" in elem_name and not "Vertical" in elem_name and not "Curve" in elem_name:
-                    pygame.draw.rect(surface, (255, 255, 0), rect, 2, 4) 
+                    self.draw_object_outline(labels, elem_name, rect, (255, 255, 0)) 

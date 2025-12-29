@@ -20,7 +20,7 @@ SCHEMA = {
         }
     ],
     "16-8": [
-        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Crossing_P1"}}
+        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Crossing_P1", "CrossingID": "P1"}}
     ],
     "35-11": [
         {
@@ -174,7 +174,7 @@ SCHEMA = {
     ],
     "17-9": [{"Name": "SemOnlyTrain_West", "TextLabels": {"Number": "N"}}],
     "16-6": [
-        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Crossing_P1"}}
+        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Crossing_P1", "CrossingID": "P1"}}
     ],
     "14-7": [
         {
@@ -209,7 +209,7 @@ SCHEMA = {
         }
     ],
     "16-10": [
-        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Crossing_P1"}}
+        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Crossing_P1", "CrossingID": "P1"}}
     ],
     "26-9": [
         {

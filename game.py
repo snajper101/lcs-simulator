@@ -49,7 +49,7 @@ def main_loop(window_surface : pygame.surface):
             if state == "game":
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        last_pressed_pos = event.pos
+                        last_pressed_pos = f"{(event.pos[0] - camera_x) // Constants.TILE_SIZE}-{(event.pos[1] - camera_y) // Constants.TILE_SIZE}" 
                     if event.button == 2:
                         is_dragging = True
                         last_mouse_pos = event.pos
@@ -120,7 +120,8 @@ def main_loop(window_surface : pygame.surface):
                 camera_y -= Constants.CAMERA_MOVE_SPEED * time_delta
 
             mouse_pos = pygame.mouse.get_pos()
-            renderer.draw_map(window_surface, simulator.current_map_data, simulator.logical_elements, (camera_x, camera_y), mouse_pos, last_pressed_pos)
+            
+            renderer.draw_map(window_surface, simulator, (camera_x, camera_y), mouse_pos, last_pressed_pos)
         
         ui_manager.update(time_delta)
         ui_manager.draw_ui(window_surface)
