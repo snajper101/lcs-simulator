@@ -196,7 +196,7 @@ class GameRenderer:
                     start_center_right = (cx - tileSizeHalf + 12, cy)
                     end_center_right = (cx + tileSizeHalf - 12, cy)
                     pygame.draw.line(surface, Constants.TRACK_COLOR, start_center_right, end_center_right, 12)
-                elif "Point" in elem_name:
+                elif "Point" in elem_name and not point.changing:
                     if point.direction == "+":
                         pygame.draw.line(surface, Constants.TRACK_COLOR, (rect.left, cy), (rect.right, cy), Constants.ISOLATION_WIDTH)
                     else:

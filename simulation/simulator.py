@@ -60,5 +60,6 @@ class Simulator:
 
         return None
         
-    def update(self, dt):
-        pass
+    def update(self):
+        for element in self.logical_elements.values():
+            element.update()

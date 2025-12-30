@@ -46,7 +46,7 @@ def main_loop(window_surface : pygame.surface):
                         state = "game"
                         ui_manager.clear_and_reset()
             ui_manager.process_events(event)
-            
+                        
             if state == "game":
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
@@ -60,7 +60,13 @@ def main_loop(window_surface : pygame.surface):
                                 selected_positions.append(clicked_pos)
                         else:
                             selected_positions = [clicked_pos]
-                   
+                
+                        selected_object = simulator.logical_elements.get(clicked_pos)
+                        if selected_object:
+                            if len(selected_object.actions) == 0:
+                                ui_manager.clear_and_reset()
+                            else:
+                                panel, action_buttons = interface.create_actions_menu(ui_manager, selected_object)
                     if event.button == 2:
                         is_dragging = True
                         last_mouse_pos = event.pos
@@ -75,6 +81,7 @@ def main_loop(window_surface : pygame.surface):
                         camera_x += dx
                         camera_y += dy
                         last_mouse_pos = (mx, my)
+            
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if state == "menu":
                     if event.ui_element == play_button:
@@ -104,7 +111,13 @@ def main_loop(window_surface : pygame.surface):
                         map = Maps(maps.get_available_maps()[map_index])
                         simulator.load_map(map.schema)
                 elif state == "game":
-                    pass
+                    if hasattr(event.ui_element, 'user_data'):
+                        data = event.ui_element.user_data
+                        point_object = data["object"]
+                        action_name = data["action"]
+                        
+                        point_object.execute_action(action_name)
+                        ui_manager.clear_and_reset()
                 elif state == "pause":
                     if event.ui_element == resume_button:
                         state = "game"
@@ -118,6 +131,9 @@ def main_loop(window_surface : pygame.surface):
                     pass
                 
         window_surface.fill((0, 0, 0))
+        
+        if simulator is not None:
+            simulator.update()
         
         if state == "game":
             keys = pygame.key.get_pressed()
@@ -133,7 +149,7 @@ def main_loop(window_surface : pygame.surface):
             mouse_pos = pygame.mouse.get_pos()
             
             renderer.draw_map(window_surface, simulator, (camera_x, camera_y), mouse_pos, selected_positions)
-        
+            
         ui_manager.update(time_delta)
         ui_manager.draw_ui(window_surface)
         

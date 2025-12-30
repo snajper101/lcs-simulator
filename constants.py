@@ -24,3 +24,5 @@ class Constants:
 
     ISOLATION_WIDTH = 4
     LINE_ISOLATION_WIDTH = 2
+    
+    POINT_CHANGE_DELAY = 2

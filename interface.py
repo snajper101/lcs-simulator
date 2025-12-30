@@ -3,9 +3,10 @@ import pygame_gui
 import pygame_gui.elements as pygame_elements
 from constants import Constants
 import maps
+from elements.track_elements import TrackElement
+from typing import List
 
-def create_main_menu( manager: pygame_gui.UIManager ) -> tuple[pygame_elements.UIButton, pygame_elements.UIButton, pygame_elements.UIButton]:
-    #Play button
+def create_main_menu(manager: pygame_gui.UIManager) -> tuple[pygame_elements.UIButton, pygame_elements.UIButton, pygame_elements.UIButton]:
     play_button = pygame_elements.UIButton(
         relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - Constants.BUTTON_WIDTH) // 2, (Constants.MAIN_WIN_HEIGHT - 2 * Constants.BUTTON_HEIGHT) // 2, 150, 40),
         text='Graj', manager=manager
@@ -23,7 +24,7 @@ def create_main_menu( manager: pygame_gui.UIManager ) -> tuple[pygame_elements.U
     
     return ( play_button, leaderboard_button, settings_button )
 
-def create_maps_menu( manager: pygame_gui.UIManager ) -> pygame_elements.UIButton:
+def create_maps_menu(manager: pygame_gui.UIManager) -> pygame_elements.UIButton:
     pygame_gui.elements.UIButton(
         relative_rect=pygame.Rect(200, 200, 50, 50), text="<", manager=manager
     )
@@ -50,7 +51,7 @@ def create_maps_menu( manager: pygame_gui.UIManager ) -> pygame_elements.UIButto
     return map_label
 
 
-def create_settings_menu( manager: pygame_gui.UIManager ) -> None:
+def create_settings_menu(manager: pygame_gui.UIManager) -> None:
     pygame_gui.elements.UIButton(
         relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - 150) // 2, 300, 150, 40 ),
         text="Powrót", manager=manager
@@ -59,7 +60,7 @@ def create_settings_menu( manager: pygame_gui.UIManager ) -> None:
 def create_pause_menu(manager: pygame_gui.UIManager) -> tuple[pygame_elements.UIButton, pygame_elements.UIButton]:
     panel_width = 300
     panel_height = 200
-    panel_rect = pygame.Rect(
+    pygame.Rect(
         (Constants.MAIN_WIN_WIDTH - panel_width) // 2,
         (Constants.MAIN_WIN_HEIGHT - panel_height) // 2,
         panel_width,
@@ -78,3 +79,33 @@ def create_pause_menu(manager: pygame_gui.UIManager) -> tuple[pygame_elements.UI
     )
     
     return resume_button, main_menu_button
+
+def create_actions_menu(manager: pygame_gui.UIManager, track_element : TrackElement) -> List[pygame_gui.elements.UIButton]:
+    panel_width = len(track_element.actions) * 150 + 10 
+    panel_height = 40
+    
+    panel_rect = pygame.Rect(((Constants.MAIN_WIN_WIDTH - panel_width) // 2, 50), 
+                             (panel_width, panel_height))
+
+    menu_panel = pygame_gui.elements.UIPanel(
+        relative_rect=panel_rect,
+        manager=manager,
+        starting_height=10
+    )
+
+    buttons = []
+    x_offset = 5
+    for action_name in track_element.actions.keys():
+        button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(x_offset, 5, 150, 30),
+            text=action_name,
+            manager=manager,
+            container=menu_panel,
+            tool_tip_text=f"Execute {action_name}"
+        )
+        
+        button.user_data = {"object": track_element, "action": action_name}
+        buttons.append(button)
+        x_offset += 155
+    
+    return menu_panel, buttons
