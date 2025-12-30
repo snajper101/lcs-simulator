@@ -27,7 +27,8 @@ def main_loop(window_surface : pygame.surface):
     
     is_dragging = False
     last_mouse_pos = (0, 0)
-    last_pressed_pos = None
+    
+    selected_positions = []
     
     while running:
         time_delta: float = clock.tick(Constants.FPS_LIMIT) / 1000.0
@@ -49,7 +50,17 @@ def main_loop(window_surface : pygame.surface):
             if state == "game":
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        last_pressed_pos = f"{(event.pos[0] - camera_x) // Constants.TILE_SIZE}-{(event.pos[1] - camera_y) // Constants.TILE_SIZE}" 
+                        clicked_pos = f"{(event.pos[0] - camera_x) // Constants.TILE_SIZE}-{(event.pos[1] - camera_y) // Constants.TILE_SIZE}" 
+                        
+                        mods = pygame.key.get_mods()
+                        if mods & pygame.KMOD_CTRL:
+                            if clicked_pos in selected_positions:
+                                selected_positions.remove(clicked_pos)
+                            elif len(selected_positions) < 2:
+                                selected_positions.append(clicked_pos)
+                        else:
+                            selected_positions = [clicked_pos]
+                   
                     if event.button == 2:
                         is_dragging = True
                         last_mouse_pos = event.pos
@@ -121,7 +132,7 @@ def main_loop(window_surface : pygame.surface):
 
             mouse_pos = pygame.mouse.get_pos()
             
-            renderer.draw_map(window_surface, simulator, (camera_x, camera_y), mouse_pos, last_pressed_pos)
+            renderer.draw_map(window_surface, simulator, (camera_x, camera_y), mouse_pos, selected_positions)
         
         ui_manager.update(time_delta)
         ui_manager.draw_ui(window_surface)

@@ -7,12 +7,13 @@ class Simulator:
     def __init__(self):
         self.current_map_data = {}
         self.logical_elements = {}
+        self.signals = {}
     
     def load_map(self, map_data : Dict ) -> None:
         self.current_map_data = map_data
         self.logical_elements = {}
         repeater_signals = []
-        signals = {}
+        self.signals = {}
         
         for coord_str, elements in map_data.items():
             grid_pos = tuple(map(int, coord_str.split('-')))
@@ -23,7 +24,7 @@ class Simulator:
                     number = labels.get( "Number", labels.get("Index") )
                 if "Sem" in name:
                     self.logical_elements[ coord_str ] = Semaphore(name, grid_pos, SignalType.SEMI_AUTO, number)
-                    signals[ number ] = self.logical_elements[ coord_str ]
+                    self.signals[ number ] = self.logical_elements[ coord_str ]
                 if "To_" in name:
                     self.logical_elements[ coord_str ] = Semaphore(name, grid_pos, SignalType.REPEATER, number)
                     repeater_signals.append(self.logical_elements[ coord_str ])
@@ -35,7 +36,7 @@ class Simulator:
         signal : Semaphore
         for signal in repeater_signals:
             advance_signal = signal.number
-            if advance_signal_ref := signals.get(advance_signal.replace("To", "")):
+            if advance_signal_ref := self.signals.get(advance_signal.replace("To", "")):
                 signal.set_advance_signal( advance_signal_ref )
     
     def get_map_object_by_name(self, object_name : str) -> Dict:

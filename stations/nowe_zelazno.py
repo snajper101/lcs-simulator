@@ -25,13 +25,13 @@ SCHEMA = {
     ],
     "12-9": [{"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "Jt4a"}}],
     "31-11": [{"Name": "Non_Isolated_Horizontal"}],
-    "21-11": [{"Name": "SemTrainShunt_East", "TextLabels": {"Number": "P"}}],
+    "21-11": [{"Name": "SemTrainShunt_East", "TextLabels": {"Number": "P"}, "AdvanceSignals": {"PBL_1A_Right_LeftTrack", "PBL_1A_Right_NormalTrack"}}],
     "13-14": [{"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz5/4"}}],
     "25-11": [{"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "JtY"}}],
     "15-11": [{"Name": "SemTrainShunt_West", "TextLabels": {"Number": "H"}}],
     "7-9": [{"Name": "SemOnlyShunt_East", "TextLabels": {"Number": "3"}}],
     "6-9": [{"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "JtA"}}],
-    "24-13": [{"Name": "SemOnlyShunt_West", "TextLabels": {"Number": "12"}}],
+    "24-13": [{"Name": "SemOnlyShunt_West", "TextLabels": {"Number": "12"}, "AdvanceSignals": {"K", "J", "H", "G", "F"}}],
     "14-13": [
         {"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "Jz5/3"}}
     ],
@@ -42,7 +42,7 @@ SCHEMA = {
             "Name": "LineBlockNew",
             "TextLabels": {
                 "Number": "1A",
-                "Direction": "Left",
+                "Direction": "Right",
                 "Type": "PBL",
                 "BlockName": "A-B",
             },
@@ -58,7 +58,7 @@ SCHEMA = {
             "Name": "LineBlockNew",
             "TextLabels": {
                 "Number": "1A",
-                "Direction": "Left",
+                "Direction": "Right",
                 "Type": "PBL",
                 "BlockName": "A-B",
             },
@@ -94,7 +94,7 @@ SCHEMA = {
             "TextLabels": {"MainDirection": "+", "Number": "6"},
         }
     ],
-    "24-11": [{"Name": "SemOnlyShunt_West", "TextLabels": {"Number": "11"}}],
+    "24-11": [{"Name": "SemOnlyShunt_West", "TextLabels": {"Number": "11"}, "AdvanceSignals": {"K", "J", "H", "G", "F"}}],
     "22-14": [
         {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz13/2"}}
     ],
@@ -110,7 +110,7 @@ SCHEMA = {
             "TextLabels": {"MainDirection": "+", "Number": "14"},
         }
     ],
-    "27-13": [{"Name": "SemOnlyTrain_West", "TextLabels": {"Number": "W"}}],
+    "27-13": [{"Name": "SemOnlyTrain_West", "TextLabels": {"Number": "W"}, "AdvanceSignals": {"K", "J", "H", "G", "F"}}],
     "10-11": [
         {
             "Name": "Point_North_East",
@@ -126,9 +126,9 @@ SCHEMA = {
         }
     ],
     "15-15": [{"Name": "SemTrainShunt_West", "TextLabels": {"Number": "F"}}],
-    "21-15": [{"Name": "SemTrainShunt_East", "TextLabels": {"Number": "S"}}],
+    "21-15": [{"Name": "SemTrainShunt_East", "TextLabels": {"Number": "S"}, "AdvanceSignals": {"PBL_1A_Right_LeftTrack", "PBL_1A_Right_NormalTrack"}}],
     "21-7": [{"Name": "Curve_West", "TextLabels": {"IsolationName": "Jz11/2"}}],
-    "20-9": [{"Name": "SemTrainShunt_East", "TextLabels": {"Number": "O"}}],
+    "20-9": [{"Name": "SemTrainShunt_East", "TextLabels": {"Number": "O"}, "AdvanceSignals": {"PBL_1A_Right_LeftTrack", "PBL_1A_Right_NormalTrack"}}],
     "4-13": [{"Name": "SemOnlyTrain_East", "TextLabels": {"Number": "C"}}],
     "3-13": [
         {
@@ -212,7 +212,7 @@ SCHEMA = {
             "Size": [150, 50],
         }
     ],
-    "27-11": [{"Name": "SemOnlyTrain_West", "TextLabels": {"Number": "Y"}}],
+    "27-11": [{"Name": "SemOnlyTrain_West", "TextLabels": {"Number": "Y"}, "AdvanceSignals": {"K", "J", "H", "G", "F"}}],
     "22-15": [{"Name": "Curve_North", "TextLabels": {"IsolationName": "Jz13/2"}}],
     "8-9": [
         {
@@ -232,7 +232,7 @@ SCHEMA = {
         {"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "Jz5/4"}}
     ],
     "4-9": [{"Name": "SemOnlyTrain_East", "TextLabels": {"Number": "A"}}],
-    "20-7": [{"Name": "SemTrainShunt_East", "TextLabels": {"Number": "N"}}],
+    "20-7": [{"Name": "SemTrainShunt_East", "TextLabels": {"Number": "N"}, "AdvanceSignals": {"PBL_1A_Right_LeftTrack", "PBL_1A_Right_NormalTrack"}}],
     "1-9": [{"Name": "To_East", "TextLabels": {"Index": "ToA"}}],
     "13-9": [{"Name": "SemOnlyShunt_East", "TextLabels": {"Number": "7"}}],
     "21-9": [
@@ -289,7 +289,7 @@ SCHEMA = {
     "9-11": [{"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "Jz3"}}],
     "22-9": [{"Name": "Curve_West", "TextLabels": {"IsolationName": "Jz11"}}],
     "11-13": [{"Name": "SemOnlyShunt_East", "TextLabels": {"Number": "5"}}],
-    "21-13": [{"Name": "SemTrainShunt_East", "TextLabels": {"Number": "R"}}],
+    "21-13": [{"Name": "SemTrainShunt_East", "TextLabels": {"Number": "R"}, "AdvanceSignals": {"PBL_1A_Right_LeftTrack", "PBL_1A_Right_NormalTrack"}}],
     "31-13": [{"Name": "Non_Isolated_Horizontal"}],
     "16-9": [{"Name": "SemTrainShunt_West", "TextLabels": {"Number": "J"}}],
     "3-11": [
