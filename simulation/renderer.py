@@ -4,7 +4,9 @@ from typing import Dict, Tuple, List
 from elements.semaphore import Semaphore, SignalState, SignalType
 from elements.point import Point
 from simulation.simulator import Simulator
+from elements.crossing import Crossing, CrossingState
 import math
+import time
 
 class GameRenderer:
     def __init__(self):
@@ -44,6 +46,14 @@ class GameRenderer:
                         coord = self.get_coordinates_from_grid(f"{signal_controller.position[0]}-{signal_controller.position[1]}")
                         pygame.draw.circle(self.surface, colour, (coord[0] + Constants.TILE_SIZE // 2, coord[1] + Constants.TILE_SIZE // 2), Constants.TILE_SIZE * 0.75, 2) 
 
+    def should_draw_crossing(self, crossing: Crossing) -> bool:
+        if not crossing:
+            return False
+        if not crossing.changing:
+            return True
+        else:
+            left = time.time() - crossing.change_start_time
+            return round(left * 1.5) < left * 1.5
   
     def draw_map(self, surface: pygame.Surface, simulator: Simulator, camera_offset: Tuple[int, int], mouse_pos: Tuple[int, int] = None, pressed_positions : List[str] = None) -> None:
         surface.fill(Constants.BG_COLOR)
@@ -68,7 +78,7 @@ class GameRenderer:
             real_cx, real_cy = rect.center
             
             object = simulator.logical_elements.get(coord_str)
-            semaphore, point = None, None
+            semaphore, point, crossing = None, None, None
             if object and isinstance(object, Semaphore):
                 semaphore : Semaphore = object
                 if semaphore.signal_type == SignalType.SEMI_AUTO:
@@ -83,6 +93,8 @@ class GameRenderer:
                         sem_colour = (0, 255, 0)
             elif object and isinstance(object, Point):
                 point: Point = object
+            elif object and isinstance(object, Crossing):
+                crossing: Crossing = object
             else:
                 sem_colour = Constants.TRACK_COLOR
 
@@ -107,6 +119,12 @@ class GameRenderer:
                     pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos, end_pos, Constants.ISOLATION_WIDTH)
                     rect = pygame.Rect(center_x - half_width, screen_y, 2 * half_width, Constants.TILE_SIZE)
                 elif "Vertical" in elem_name:
+                    if crossing:
+                        if not self.should_draw_crossing(crossing):
+                            continue
+                        color = crossing.state == CrossingState.OPENED and (255, 153, 255) or Constants.TRACK_COLOR
+                    else:
+                        color = Constants.TRACK_COLOR
                     offset = element.get("Offset") or (0, 25)
                     size = element.get("Size") or (0, 50)
                     
@@ -116,7 +134,7 @@ class GameRenderer:
                     start_pos = (cx, center_y - half_height)
                     end_pos = (cx, center_y + half_height)
                     real_cy = center_y
-                    pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos, end_pos, Constants.ISOLATION_WIDTH)
+                    pygame.draw.line(surface, color, start_pos, end_pos, Constants.ISOLATION_WIDTH)
                     rect = pygame.Rect(screen_x, center_y - half_height, Constants.TILE_SIZE, 2 * half_height)
                 elif "Platform" in elem_name:
                     tileSizeHalf = Constants.TILE_SIZE // 2
@@ -372,7 +390,10 @@ class GameRenderer:
                         pygame.draw.line(surface, Constants.TRACK_COLOR, (rect.left, cy), (rect.left + 6, cy), Constants.ISOLATION_WIDTH)
                         pygame.draw.line(surface, Constants.TRACK_COLOR, (cx, cy - 8), (cx, cy + 8), Constants.LINE_ISOLATION_WIDTH)
                         pygame.draw.line(surface, Constants.TRACK_COLOR, (rect.right, cy), (rect.right - 6, cy), Constants.ISOLATION_WIDTH)
-                elif "Crossing_" in elem_name:
+                elif "Crossing_" in elem_name and crossing:
+                    if not self.should_draw_crossing(crossing):
+                        continue
+                    crossing_colour = crossing.state == CrossingState.OPENED and (255, 153, 255) or Constants.TRACK_COLOR
                     tileSizeHalf = Constants.TILE_SIZE // 2
                     if "North" in elem_name:
                         points_left = [(rect.left + 2, rect.top + 4), 
@@ -387,9 +408,9 @@ class GameRenderer:
                         ]
                         start_pos = (cx, cy)
                         end_pos = (cx, cy + tileSizeHalf)
-                        pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos, end_pos, 3)
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_left)
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_right)
+                        pygame.draw.line(surface, crossing_colour, start_pos, end_pos, 3)
+                        pygame.draw.polygon(surface, crossing_colour, points_left)
+                        pygame.draw.polygon(surface, crossing_colour, points_right)
                     if "South" in elem_name:
                         points_left = [(rect.left + 2, rect.bottom - 4), 
                             (rect.left + 6, rect.bottom - 4),
@@ -403,9 +424,9 @@ class GameRenderer:
                         ]
                         start_pos = (cx, cy)
                         end_pos = (cx, cy - tileSizeHalf)
-                        pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos, end_pos, 3)
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_left)
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points_right)
+                        pygame.draw.line(surface, crossing_colour, start_pos, end_pos, 3)
+                        pygame.draw.polygon(surface, crossing_colour, points_left)
+                        pygame.draw.polygon(surface, crossing_colour, points_right)
                 elif "Curve_" in elem_name:
                     if "West" in elem_name:
                         horizontal_start = (rect.left, cy)

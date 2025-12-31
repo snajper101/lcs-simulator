@@ -26,3 +26,4 @@ class Constants:
     LINE_ISOLATION_WIDTH = 2
     
     POINT_CHANGE_DELAY = 2
+    CROSSING_CHANGE_DELAY = 5

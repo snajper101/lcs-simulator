@@ -2,7 +2,7 @@ from elements.semaphore import Semaphore, SignalType
 from elements.station import Station
 from elements.point import Point
 from elements.crossing import Crossing
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Any, List
 class Simulator:
     def __init__(self):
         self.current_map_data = {}
@@ -11,16 +11,17 @@ class Simulator:
     
     def load_map(self, map_data : Dict ) -> None:
         self.current_map_data = map_data
-        self.logical_elements = {}
-        repeater_signals = []
-        self.signals = {}
+        self.logical_elements : Dict[ str, Any ] = {}
+        repeater_signals: List[ Point ] = []
+        self.signals: Dict[ str, Semaphore ] = {}
+        crossings : Dict[str, Crossing] = {}
         
         for coord_str, elements in map_data.items():
             grid_pos = tuple(map(int, coord_str.split('-')))
             for element in elements:
                 name = element.get("Name", "")
-                if "TextLabels" in element:
-                    labels = element["TextLabels"]
+                labels = element.get("TextLabels")
+                if "TextLabels" in element and labels:
                     number = labels.get( "Number", labels.get("Index") )
                 if "Sem" in name:
                     self.logical_elements[ coord_str ] = Semaphore(name, grid_pos, SignalType.SEMI_AUTO, number)
@@ -30,8 +31,11 @@ class Simulator:
                     repeater_signals.append(self.logical_elements[ coord_str ])
                 elif "Point" in name:
                     self.logical_elements[ coord_str ] = Point(name, grid_pos)
-                elif "Crossing" in name:
-                    self.logical_elements[ coord_str ] = Crossing(name, grid_pos)
+                elif labels: 
+                    if crossing_id := labels.get("CrossingID"):
+                        if not crossing_id in crossings:
+                            crossings[ crossing_id ] = Crossing(name, grid_pos)
+                        self.logical_elements[ coord_str ] = crossings[ crossing_id ]
                     
         signal : Semaphore
         for signal in repeater_signals:
