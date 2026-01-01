@@ -5,8 +5,10 @@ from elements.semaphore import Semaphore, SignalState, SignalType
 from elements.point import Point
 from simulation.simulator import Simulator
 from elements.crossing import Crossing, CrossingState
+from elements.line_blockade import LineBlockade, BlocadeDirection
 import math
 import time
+from datetime import datetime
 
 class GameRenderer:
     def __init__(self):
@@ -23,7 +25,7 @@ class GameRenderer:
         
         return (int(self.camera_x + (grid_x * Constants.TILE_SIZE)), int(self.camera_y + (grid_y * Constants.TILE_SIZE)))
   
-    def draw_object_outline(self, element: Dict, pressed: bool, rect : pygame.Rect, colour: Tuple[int, int, int]) -> None:
+    def draw_object_outline(self, grid_pos: str, element: Dict, pressed: bool, rect : pygame.Rect, colour: Tuple[int, int, int], index : int = 0) -> None:
         elem_name = element.get("Name", "")
         if labels := element.get("TextLabels", ""):
             if crossing_id := labels.get("CrossingID"):
@@ -36,15 +38,15 @@ class GameRenderer:
                     pygame.draw.rect(self.surface, colour, crossing_rect, 2, 4) 
             elif not "Platform" in elem_name and not "Vertical" in elem_name and not "Curve" in elem_name:
                 pygame.draw.rect(self.surface, colour, rect, 2, 4) 
-        if pressed and "Sem" in elem_name:
-            advance_signals = element.get("AdvanceSignals")
-            if advance_signals:
-                signal : str
-                for signal in advance_signals:
-                    signal_controller : Semaphore
-                    if signal_controller := self.simulator.signals.get(signal):
-                        coord = self.get_coordinates_from_grid(f"{signal_controller.position[0]}-{signal_controller.position[1]}")
-                        pygame.draw.circle(self.surface, colour, (coord[0] + Constants.TILE_SIZE // 2, coord[1] + Constants.TILE_SIZE // 2), Constants.TILE_SIZE * 0.75, 2) 
+        object = self.simulator.logical_elements.get(grid_pos)      
+        if pressed and index == 0 and object and isinstance(object, Semaphore):
+            number = labels.get("Number", labels.get("Index"))
+            if signal_controller := self.simulator.signals.get(number):
+                for route in signal_controller.routes:
+                    advance_signal : Semaphore = route.advance_signal
+                    if advance_signal is not None:
+                        coord = self.get_coordinates_from_grid(f"{advance_signal.position[0]}-{advance_signal.position[1]}")
+                        pygame.draw.circle(self.surface, colour, (coord[0] + Constants.TILE_SIZE // 2, coord[1] + Constants.TILE_SIZE // 2), Constants.TILE_SIZE * 0.75, 2)
 
     def should_draw_crossing(self, crossing: Crossing) -> bool:
         if not crossing:
@@ -54,6 +56,16 @@ class GameRenderer:
         else:
             left = time.time() - crossing.change_start_time
             return round(left * 1.5) < left * 1.5
+        
+    def should_draw_line_block(self, line_block: LineBlockade) -> bool:
+        if not line_block:
+            return False
+        if not line_block.changing:
+            return True
+        else:
+            left = time.time() - line_block.change_start_time
+            return round(left * 1.5) < left * 1.5
+            
   
     def draw_map(self, surface: pygame.Surface, simulator: Simulator, camera_offset: Tuple[int, int], mouse_pos: Tuple[int, int] = None, pressed_positions : List[str] = None) -> None:
         surface.fill(Constants.BG_COLOR)
@@ -78,7 +90,7 @@ class GameRenderer:
             real_cx, real_cy = rect.center
             
             object = simulator.logical_elements.get(coord_str)
-            semaphore, point, crossing = None, None, None
+            semaphore, point, crossing, line_block = None, None, None, None
             if object and isinstance(object, Semaphore):
                 semaphore : Semaphore = object
                 if semaphore.signal_type == SignalType.SEMI_AUTO:
@@ -95,17 +107,42 @@ class GameRenderer:
                 point: Point = object
             elif object and isinstance(object, Crossing):
                 crossing: Crossing = object
+            elif object and isinstance(object, LineBlockade):
+                line_block: LineBlockade = object
             else:
                 sem_colour = Constants.TRACK_COLOR
 
             for element in elements:
                 elem_name = element.get("Name", "")
+                
+                track_color = Constants.TRACK_COLOR
+                isolation = None
+                if "TextLabels" in element:
+                    labels = element.get("TextLabels")
+                    if isolation_name := labels.get("IsolationName"):
+                        isolation : str = isolation_name.split("/")[0]
+                        isolation_type : str = len(isolation_name.split("/")) == 2 and isolation_name.split("/")[1] or "0"
+                        if not isolation_type in ["0", "1", "2"]:
+                            isolation_type = "0"
+                        junctions : List[str] = isolation_name.replace("Jz", "").split("/")[0].split("_")
+                        junctions_ref = junctions[0] != '' and [ref for ref in simulator.points.values() if ref.number in junctions ] or []
+                        if isolation_ref := simulator.isolations.get(isolation):
+                            if isolation_ref.route:
+                                if isolation_type == "0":
+                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                                elif isolation_type == "1" and len([ref for ref in junctions_ref if ref.direction == "+"]) > 0:
+                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                                elif isolation_type == "2" and len([ref for ref in junctions_ref if ref.direction == "-"]) > 0:
+                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                if point and len(point.routes) > 0:
+                    track_color = point.routes[0].is_train_route and (0, 255, 0) or (255, 255, 0)
+                
                 if elem_name == "Non_Isolated_Horizontal":
-                    pygame.draw.line(surface, Constants.TRACK_COLOR, (rect.left, cy), (rect.right, cy), Constants.LINE_ISOLATION_WIDTH)
+                    pygame.draw.line(surface, track_color, (rect.left, cy), (rect.right, cy), Constants.LINE_ISOLATION_WIDTH)
                 elif elem_name == "Isolation_Shortened_Horizontal_Number":
                     start_pos = (rect.left + 4, cy)
                     end_pos = (rect.right - 4, cy)
-                    pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos, end_pos, Constants.ISOLATION_WIDTH)
+                    pygame.draw.line(surface, track_color, start_pos, end_pos, Constants.ISOLATION_WIDTH)
                 elif "Horizontal" in elem_name and not "Platform" in elem_name:
                     offset = element.get("Offset") or (25, 0)
                     size = element.get("Size") or (50, 0)
@@ -116,7 +153,7 @@ class GameRenderer:
                     start_pos = (center_x - half_width, cy)
                     end_pos = (center_x + half_width, cy)
                     real_cx = center_x
-                    pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos, end_pos, Constants.ISOLATION_WIDTH)
+                    pygame.draw.line(surface, track_color, start_pos, end_pos, Constants.ISOLATION_WIDTH)
                     rect = pygame.Rect(center_x - half_width, screen_y, 2 * half_width, Constants.TILE_SIZE)
                 elif "Vertical" in elem_name:
                     if crossing:
@@ -124,7 +161,7 @@ class GameRenderer:
                             continue
                         color = crossing.state == CrossingState.OPENED and (255, 153, 255) or Constants.TRACK_COLOR
                     else:
-                        color = Constants.TRACK_COLOR
+                        color = track_color
                     offset = element.get("Offset") or (0, 25)
                     size = element.get("Size") or (0, 50)
                     
@@ -197,79 +234,97 @@ class GameRenderer:
                         pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos_bottom, end_pos_bottom, Constants.LINE_ISOLATION_WIDTH)
                 elif "LineBlockNew" == elem_name:
                     tileSizeHalf = Constants.TILE_SIZE // 2
-                    traingle_left = [(cx + tileSizeHalf - 8, cy - tileSizeHalf + 8), 
-                        (cx + tileSizeHalf - 8, cy + tileSizeHalf - 8), 
-                        (rect.right, cy)]
-                    pygame.draw.polygon(surface, Constants.TRACK_COLOR, traingle_left)
-                    triangle_right = [(cx - tileSizeHalf + 8, cy - tileSizeHalf + 8), 
-                        (cx - tileSizeHalf + 8, cy + tileSizeHalf - 8), 
-                        (rect.left, cy)]
-                    pygame.draw.polygon(surface, Constants.TRACK_COLOR, triangle_right)
-                    start_pos_left = (rect.left, rect.top - 2)
-                    end_pos_left = (cx - tileSizeHalf + 8, rect.top - 2)
-                    pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos_left, end_pos_left, 4)
-                    start_pos_right = (rect.right, rect.top - 2)
-                    end_pos_right = (cx + tileSizeHalf - 8, rect.top - 2)
-                    pygame.draw.line(surface, Constants.TRACK_COLOR, start_pos_right, end_pos_right, 4)
-                    start_center_right = (cx - tileSizeHalf + 12, cy)
-                    end_center_right = (cx + tileSizeHalf - 12, cy)
-                    pygame.draw.line(surface, Constants.TRACK_COLOR, start_center_right, end_center_right, 12)
+                    state = line_block.changing and line_block.target_state or line_block.state
+                    if state == BlocadeDirection.IDLE:
+                        arrow_color = Constants.TRACK_COLOR
+                    else:
+                        arrow_color = (255, 255, 0)
+                    if state == BlocadeDirection.IDLE or state == BlocadeDirection.RIGHT:
+                        traingle_left = [(cx + tileSizeHalf - 8, cy - tileSizeHalf + 8), 
+                            (cx + tileSizeHalf - 8, cy + tileSizeHalf - 8), 
+                            (rect.right, cy)]
+                        pygame.draw.polygon(surface, arrow_color, traingle_left)
+                    if state == BlocadeDirection.IDLE or state == BlocadeDirection.LEFT:
+                        triangle_right = [(cx - tileSizeHalf + 8, cy - tileSizeHalf + 8), 
+                            (cx - tileSizeHalf + 8, cy + tileSizeHalf - 8), 
+                            (rect.left, cy)]
+                        pygame.draw.polygon(surface, arrow_color, triangle_right)
+                    if not line_block.changing:
+                        if state == BlocadeDirection.IDLE or state == BlocadeDirection.RIGHT:
+                            start_pos_left = (rect.left, rect.top - 2)
+                            end_pos_left = (cx - tileSizeHalf + 8, rect.top - 2)
+                            pygame.draw.line(surface, state == BlocadeDirection.IDLE and Constants.TRACK_COLOR or (0, 255, 0), start_pos_left, end_pos_left, 4)
+                        if state == BlocadeDirection.IDLE or state == BlocadeDirection.LEFT:
+                            start_pos_right = (rect.right, rect.top - 2)
+                            end_pos_right = (cx + tileSizeHalf - 8, rect.top - 2)
+                            pygame.draw.line(surface, state == BlocadeDirection.IDLE and Constants.TRACK_COLOR or (0, 255, 0), start_pos_right, end_pos_right, 4)
+                    if self.should_draw_line_block(line_block):        
+                        if state == BlocadeDirection.IDLE:      
+                            start_center = (cx - tileSizeHalf + 12, cy)
+                            end_center = (cx + tileSizeHalf - 12, cy)
+                        elif state == BlocadeDirection.LEFT:
+                            start_center = (cx - tileSizeHalf + 12, cy)
+                            end_center = (rect.right - 4, cy)
+                        else:
+                            start_center = (cx + tileSizeHalf - 12, cy)
+                            end_center = (rect.left + 4, cy)
+                        pygame.draw.line(surface, arrow_color, start_center, end_center, 10)
                 elif "Point" in elem_name and not point.changing:
                     if point.direction == "+":
-                        pygame.draw.line(surface, Constants.TRACK_COLOR, (rect.left, cy), (rect.right, cy), Constants.ISOLATION_WIDTH)
+                        pygame.draw.line(surface, track_color, (rect.left, cy), (rect.right, cy), Constants.ISOLATION_WIDTH)
                     else:
                         if "South_West" in elem_name:
                             horizontal_start = (rect.left, cy)
                             horizontal_end = (rect.left + 4, cy)
-                            pygame.draw.line(surface, Constants.TRACK_COLOR, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
+                            pygame.draw.line(surface, track_color, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
                             vertical_start = (cx, rect.bottom - 4)
                             vertical_end = (cx, rect.bottom)
-                            pygame.draw.line(surface, Constants.TRACK_COLOR, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
+                            pygame.draw.line(surface, track_color, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
                             curve = [(rect.left + 4, cy + Constants.ISOLATION_WIDTH // 2), 
                                 (rect.left + 4, cy - (Constants.ISOLATION_WIDTH - 1 )  // 2),
                                 (cx + Constants.ISOLATION_WIDTH // 2, rect.bottom - 4), 
                                 (cx - Constants.ISOLATION_WIDTH // 2, rect.bottom - 4),
                             ]
-                            pygame.draw.polygon(surface, Constants.TRACK_COLOR, curve)
+                            pygame.draw.polygon(surface, track_color, curve)
                         elif "South_East" in elem_name:
                             horizontal_start = (rect.right, cy)
                             horizontal_end = (rect.right - 4, cy)
-                            pygame.draw.line(surface, Constants.TRACK_COLOR, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
+                            pygame.draw.line(surface, track_color, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
                             vertical_start = (cx, rect.bottom - 4)
                             vertical_end = (cx, rect.bottom)
-                            pygame.draw.line(surface, Constants.TRACK_COLOR, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
+                            pygame.draw.line(surface, track_color, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
                             curve = [(rect.right - 4, cy + Constants.ISOLATION_WIDTH // 2), 
                                 (rect.right - 4, cy - (Constants.ISOLATION_WIDTH - 1 ) // 2),
                                 (cx - (Constants.ISOLATION_WIDTH - 1 ) // 2, rect.bottom - 4),
                                 (cx + Constants.ISOLATION_WIDTH // 2, rect.bottom - 4), 
                             ]
-                            pygame.draw.polygon(surface, Constants.TRACK_COLOR, curve)      
+                            pygame.draw.polygon(surface, track_color, curve)      
                         elif "North_East" in elem_name:
                             horizontal_start = (rect.right, cy)
                             horizontal_end = (rect.right - 4, cy)
-                            pygame.draw.line(surface, Constants.TRACK_COLOR, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
+                            pygame.draw.line(surface, track_color, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
                             vertical_start = (cx, rect.top + 4)
                             vertical_end = (cx, rect.top)
-                            pygame.draw.line(surface, Constants.TRACK_COLOR, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
+                            pygame.draw.line(surface, track_color, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
                             curve = [(rect.right - 4, cy + Constants.ISOLATION_WIDTH // 2), 
                                 (rect.right - 4, cy - (Constants.ISOLATION_WIDTH - 1 ) // 2),
                                 (cx + Constants.ISOLATION_WIDTH // 2, rect.top + 4), 
                                 (cx - (Constants.ISOLATION_WIDTH - 1 ) // 2, rect.top + 4),
                             ]
-                            pygame.draw.polygon(surface, Constants.TRACK_COLOR, curve) 
+                            pygame.draw.polygon(surface, track_color, curve) 
                         else:
                             horizontal_start = (rect.left, cy)
                             horizontal_end = (rect.left + 4, cy)
-                            pygame.draw.line(surface, Constants.TRACK_COLOR, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
+                            pygame.draw.line(surface, track_color, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
                             vertical_start = (cx, rect.top + 4)
                             vertical_end = (cx, rect.top)
-                            pygame.draw.line(surface, Constants.TRACK_COLOR, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
+                            pygame.draw.line(surface, track_color, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
                             curve = [(rect.left + 4, cy + Constants.ISOLATION_WIDTH // 2), 
                                 (rect.left + 4, cy - (Constants.ISOLATION_WIDTH - 1 ) // 2),
                                 (cx - (Constants.ISOLATION_WIDTH - 1 ) // 2, rect.top + 4),
                                 (cx + Constants.ISOLATION_WIDTH // 2, rect.top + 4), 
                             ]
-                            pygame.draw.polygon(surface, Constants.TRACK_COLOR, curve)
+                            pygame.draw.polygon(surface, track_color, curve)
                 elif "SemOnlyShunt" in elem_name:
                     if "East" in elem_name:
                         points_top = [(rect.left + 10, rect.top + 4), 
@@ -393,7 +448,7 @@ class GameRenderer:
                 elif "Crossing_" in elem_name and crossing:
                     if not self.should_draw_crossing(crossing):
                         continue
-                    crossing_colour = crossing.state == CrossingState.OPENED and (255, 153, 255) or Constants.TRACK_COLOR
+                    crossing_colour = crossing.state == CrossingState.OPENED and (255, 153, 255) or (len(crossing.routes) > 0 and (255, 255, 0) or Constants.TRACK_COLOR)
                     tileSizeHalf = Constants.TILE_SIZE // 2
                     if "North" in elem_name:
                         points_left = [(rect.left + 2, rect.top + 4), 
@@ -481,16 +536,20 @@ class GameRenderer:
                         ]
                         pygame.draw.polygon(surface, Constants.TRACK_COLOR, curve)
                 elif "TrainEnd_" in elem_name:
+                    if semaphore and semaphore.ending_route:
+                        color = (255, 0, 0)
+                    else:
+                        color = (255, 255, 255)
                     if "West" in elem_name:
                         points = [(cx + tileSizeHalf - 10, cy - tileSizeHalf + 10), 
                             (cx + tileSizeHalf - 10, cy + tileSizeHalf - 10), 
                             (cx - tileSizeHalf + 10, cy)]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points)
+                        pygame.draw.polygon(surface, color, points)
                     elif "East" in elem_name:
                         points = [(cx - tileSizeHalf + 10, cy - tileSizeHalf + 10), 
                             (cx - tileSizeHalf + 10, cy + tileSizeHalf - 10), 
                             (cx + tileSizeHalf - 10, cy)]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points)
+                        pygame.draw.polygon(surface, color, points)
                 elif "ShuntEnd" in elem_name:
                     radius = 10 
                     arc_rect = pygame.Rect(cx - radius, cy - radius - 10, radius * 2, radius * 2)
@@ -517,6 +576,9 @@ class GameRenderer:
                             text_surf = self.font_title.render(label_text, True, Constants.TRACK_COLOR)
                             text_rect = text_surf.get_rect(center=(cx, cy))
                             surface.blit(text_surf, text_rect)
+                            clock_text_surf = self.font_title.render(datetime.now().strftime("%H:%M:%S"), True, Constants.TRACK_COLOR)
+                            clock_text_rect = clock_text_surf.get_rect(center=(cx, cy - 30))
+                            surface.blit(clock_text_surf, clock_text_rect)
                         elif "Isolation_Shortened_Horizontal_Number" == elem_name:
                             text_surf = self.small_font.render(str(label_text), True, Constants.TRACK_COLOR)
                             text_rect = text_surf.get_rect(center=(cx, cy - 10))
@@ -566,7 +628,7 @@ class GameRenderer:
                             pygame.draw.rect(surface, (0, 0, 0), bg_rect)            
                             surface.blit(text_surf, text_rect)
             if coord_str in pressed_positions:
-                self.draw_object_outline(element, True, rect, (0, 255, 255))
+                self.draw_object_outline(coord_str, element, True, rect, (0, 255, 255), pressed_positions.index(coord_str))
             elif mouse_pos and rect.collidepoint(mouse_pos):
                 if not "Platform" in elem_name and not "Vertical" in elem_name and not "Curve" in elem_name:
-                    self.draw_object_outline(element, False, rect, (255, 255, 0)) 
+                    self.draw_object_outline(coord_str, element, False, rect, (255, 255, 0)) 

@@ -27,3 +27,4 @@ class Constants:
     
     POINT_CHANGE_DELAY = 2
     CROSSING_CHANGE_DELAY = 5
+    BLOCKADE_CHANGE_DELAY = 4

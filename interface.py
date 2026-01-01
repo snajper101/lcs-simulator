@@ -81,7 +81,8 @@ def create_pause_menu(manager: pygame_gui.UIManager) -> tuple[pygame_elements.UI
     return resume_button, main_menu_button
 
 def create_actions_menu(manager: pygame_gui.UIManager, track_element : TrackElement) -> List[pygame_gui.elements.UIButton]:
-    panel_width = len(track_element.actions) * 150 + 10 
+    font = pygame.font.Font(pygame.font.get_default_font(),)
+    panel_width = sum([font.size(action_name)[0] + 5 for action_name in track_element.actions.keys()]) + 10 
     panel_height = 40
     
     panel_rect = pygame.Rect(((Constants.MAIN_WIN_WIDTH - panel_width) // 2, 50), 
@@ -96,8 +97,9 @@ def create_actions_menu(manager: pygame_gui.UIManager, track_element : TrackElem
     buttons = []
     x_offset = 5
     for action_name in track_element.actions.keys():
+        width = font.size(action_name)[0] + 5
         button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(x_offset, 5, 150, 30),
+            relative_rect=pygame.Rect(x_offset, 5, width, 30),
             text=action_name,
             manager=manager,
             container=menu_panel,
@@ -106,6 +108,6 @@ def create_actions_menu(manager: pygame_gui.UIManager, track_element : TrackElem
         
         button.user_data = {"object": track_element, "action": action_name}
         buttons.append(button)
-        x_offset += 155
+        x_offset += width
     
     return menu_panel, buttons

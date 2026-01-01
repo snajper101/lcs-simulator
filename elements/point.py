@@ -14,11 +14,11 @@ class Point(TrackElement):
         self.register_action("MINUS", self.set_direction_minus)
         
     def set_direction_plus(self):
-        if not self.locked:
+        if not self.locked and len(self.routes) == 0:
             self.start_move("+")
         
     def set_direction_minus(self):
-        if not self.locked:
+        if not self.locked and len(self.routes) == 0:
             self.start_move("-")
 
     def start_move(self, new_direction: str):
@@ -36,3 +36,6 @@ class Point(TrackElement):
                 self.locked = False
                 self.target_direction = None
         super().update()
+        
+    def __str__(self):
+        return self.number

@@ -12,16 +12,17 @@ class Crossing(TrackElement):
         self.state = CrossingState.OPENED
         self.changing = False
         self.locked = False
+        self.target_state = None
         
         self.register_action("OPEN", self.open_crossing)
         self.register_action("CLOSE", self.close_crossing)
         
     def open_crossing(self):
-        if not self.locked:
+        if not self.locked and len(self.routes) == 0:
             self.start_move(CrossingState.OPENED)
         
     def close_crossing(self):
-        if not self.locked:
+        if not self.locked and len(self.routes) == 0:
             self.start_move(CrossingState.CLOSED)
 
     def start_move(self, new_state: CrossingState):

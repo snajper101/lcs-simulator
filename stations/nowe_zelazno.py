@@ -306,3 +306,5 @@ SCHEMA = {
     "2-11": [{"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "it2C"}}],
     "1-11": [{"Name": "To_East", "TextLabels": {"Index": "ToB"}}],
 }
+
+DEPENDENCIES = {}

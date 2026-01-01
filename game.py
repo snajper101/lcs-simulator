@@ -6,7 +6,7 @@ import maps
 from maps import Maps
 from simulation.simulator import Simulator
 from simulation.renderer import GameRenderer
-import stations.brzozowa_dolina, stations.kamieniec, stations.nowe_zelazno
+from elements.semaphore import Semaphore
 
 def main_loop(window_surface : pygame.surface):
     clock: pygame.time.Clock = pygame.time.Clock()
@@ -50,8 +50,7 @@ def main_loop(window_surface : pygame.surface):
             if state == "game":
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        clicked_pos = f"{(event.pos[0] - camera_x) // Constants.TILE_SIZE}-{(event.pos[1] - camera_y) // Constants.TILE_SIZE}" 
-                        
+                        clicked_pos = f"{(event.pos[0] - camera_x) // Constants.TILE_SIZE}-{(event.pos[1] - camera_y) // Constants.TILE_SIZE}"                 
                         mods = pygame.key.get_mods()
                         if mods & pygame.KMOD_CTRL:
                             if clicked_pos in selected_positions:
@@ -65,8 +64,19 @@ def main_loop(window_surface : pygame.surface):
                         if selected_object:
                             if len(selected_object.actions) == 0:
                                 ui_manager.clear_and_reset()
-                            else:
+                            elif isinstance(selected_object, Semaphore) and len(selected_positions) == 2:
+                                if first_object := simulator.logical_elements.get(selected_positions[0]):
+                                    first_semaphore : Semaphore = first_object
+                                    advance_semaphore : Semaphore = selected_object
+                                    first_semaphore.set_advance_selected_signal(advance_semaphore)
+                                    ui_manager.clear_and_reset()
+                                    panel, action_buttons = interface.create_actions_menu(ui_manager, first_semaphore)
+                            elif not isinstance(selected_object, Semaphore):
+                                ui_manager.clear_and_reset()
                                 panel, action_buttons = interface.create_actions_menu(ui_manager, selected_object)
+                            else:
+                                ui_manager.clear_and_reset()
+                    
                     if event.button == 2:
                         is_dragging = True
                         last_mouse_pos = event.pos
@@ -108,8 +118,7 @@ def main_loop(window_surface : pygame.surface):
                         state = "game"
                         camera_x = Constants.GRID_OFFSET_X
                         camera_y = Constants.GRID_OFFSET_Y
-                        map = Maps(maps.get_available_maps()[map_index])
-                        simulator.load_map(map.schema)
+                        simulator.load_map(Maps(maps.get_available_maps()[map_index]))
                 elif state == "game":
                     if hasattr(event.ui_element, 'user_data'):
                         data = event.ui_element.user_data
@@ -133,7 +142,7 @@ def main_loop(window_surface : pygame.surface):
         window_surface.fill((0, 0, 0))
         
         if simulator is not None:
-            simulator.update()
+            simulator.update(time_delta)
         
         if state == "game":
             keys = pygame.key.get_pressed()
