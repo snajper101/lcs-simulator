@@ -7,6 +7,7 @@ from maps import Maps
 from simulation.simulator import Simulator
 from simulation.renderer import GameRenderer
 from elements.semaphore import Semaphore
+from elements.train_spawner import TrainSpawner
 
 def main_loop(window_surface : pygame.surface):
     clock: pygame.time.Clock = pygame.time.Clock()
@@ -62,20 +63,19 @@ def main_loop(window_surface : pygame.surface):
                 
                         selected_object = simulator.logical_elements.get(clicked_pos)
                         if selected_object:
-                            if len(selected_object.actions) == 0:
-                                ui_manager.clear_and_reset()
+                            ui_manager.clear_and_reset()
+                            if isinstance(selected_object, TrainSpawner):
+                                panel, action_buttons = interface.create_train_spawner_menu(ui_manager, selected_object)
+                                
                             elif isinstance(selected_object, Semaphore) and len(selected_positions) == 2:
                                 if first_object := simulator.logical_elements.get(selected_positions[0]):
                                     first_semaphore : Semaphore = first_object
                                     advance_semaphore : Semaphore = selected_object
                                     first_semaphore.set_advance_selected_signal(advance_semaphore)
-                                    ui_manager.clear_and_reset()
                                     panel, action_buttons = interface.create_actions_menu(ui_manager, first_semaphore)
-                            elif not isinstance(selected_object, Semaphore):
-                                ui_manager.clear_and_reset()
+                                    
+                            elif hasattr(selected_object, "actions") and len(selected_object.actions) > 0:
                                 panel, action_buttons = interface.create_actions_menu(ui_manager, selected_object)
-                            else:
-                                ui_manager.clear_and_reset()
                     
                     if event.button == 2:
                         is_dragging = True
@@ -125,8 +125,13 @@ def main_loop(window_surface : pygame.surface):
                         point_object = data["object"]
                         action_name = data["action"]
                         
-                        point_object.execute_action(action_name)
-                        ui_manager.clear_and_reset()
+                        if action_name == "select_train":
+                            train = data["train"]
+                            spawner : TrainSpawner = point_object
+                            spawner.add_train_to_line(train, [track for track in spawner.tracks if track.normal][0])
+                        else:
+                            point_object.execute_action(action_name)
+                            ui_manager.clear_and_reset()
                 elif state == "pause":
                     if event.ui_element == resume_button:
                         state = "game"

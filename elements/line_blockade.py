@@ -8,13 +8,16 @@ class BlocadeDirection(Enum):
     RIGHT = 2
 
 class LineBlockade(TrackElement):
-    def __init__(self, name: str, position: tuple, direction: str, type: str):
+    def __init__(self, name: str, position: tuple, direction: str, type: str, block_name: str, number: str):
         super().__init__(name, position)
         self.state = BlocadeDirection.IDLE
         self.default_direction = direction == "Left" and BlocadeDirection.LEFT or BlocadeDirection.RIGHT
         self.type = type
         self.changing = False
         self.previous_direction = None
+        self.block_name = block_name
+        self.number = number
+        self.movable = False
 
         self.register_action("WBL", self.set_direction)
         self.register_action("ZWBL", self.reset_direction)
@@ -24,7 +27,6 @@ class LineBlockade(TrackElement):
             return
         self.previous_direction = self.state
         self.start_move(BlocadeDirection.IDLE)
-        
     
     def set_direction(self):
         if self.state != BlocadeDirection.IDLE:

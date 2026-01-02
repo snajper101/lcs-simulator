@@ -1,6 +1,8 @@
 from elements.track_elements import TrackElement
 import time
 from constants import Constants
+from typing import List
+
 class Point(TrackElement):
     def __init__(self, name: str, position: tuple, number: str = "", direction: str = "+"):
         super().__init__(name, position)

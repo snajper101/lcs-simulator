@@ -50,6 +50,22 @@ SCHEMA = {
         }
     ],
     "0-5": [{"Name": "Non_Isolated_Horizontal"}],
+    "0-6": [
+        {
+            "Name": "LineTrainSpawner",
+            "TextLabels": {"Destination": "Kamienny Most"},
+            "Tracks": [{
+                "Name": "1D",
+                "Position": "2-5",
+                "Normal": False,
+            }, {
+                "Name": "2D",
+                "Position": "2-7",
+                "Normal": True,
+            }],
+            "Direction": "Right"
+        }
+    ],
     "1-5": [{"Name": "To_East", "TextLabels": {"Index": "ToT"}}],
     "2-5": [{"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "it1D"}}],
     "16-4": [
@@ -75,7 +91,7 @@ SCHEMA = {
             "Name": "LineBlockNew",
             "TextLabels": {
                 "Number": "1Z",
-                "Direction": "Right",
+                "Direction": "Left",
                 "Type": "PBL",
                 "BlockName": "C-Z",
             },
@@ -89,7 +105,6 @@ SCHEMA = {
     ],
     "5-9": [{"Name": "TrainEnd_West", "TextLabels": {"ID": "SBL_C-Z_1"}}],
     "4-9": [{"Name": "SemOnlyTrain_East", "TextLabels": {"Number": "W"}}],
-    "36-7": [{"Name": "Non_Isolated_Horizontal"}],
     "16-7": [
         {"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "Jz24/1"}}
     ],
@@ -106,7 +121,7 @@ SCHEMA = {
         }
     ],
     "9-8": [
-        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz32_33/1"}}
+        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz32_33/20"}}
     ],
     "14-11": [
         {
@@ -188,8 +203,20 @@ SCHEMA = {
             "TextLabels": {"MainDirection": "+", "Number": "7"},
         }
     ],
+    "34-6": [
+        {
+            "Name": "LineTrainSpawner",
+            "TextLabels": {"Destination": "Kamieniec"},
+            "Tracks": [{
+                "Name": "1E",
+                "Position": "32-7",
+                "Normal": True,
+            }],
+            "Direction": "Left"
+        }
+    ],
     "34-7": [{"Name": "Non_Isolated_Horizontal"}],
-    "22-5": [{"Name": "Curve_West", "TextLabels": {"IsolationName": "Jz7_8/2"}}],
+    "22-5": [{"Name": "Curve_West", "TextLabels": {"IsolationName": "Jz7_8/02"}}],
     "12-5": [
         {
             "Name": "Point_South_West",
@@ -215,12 +242,6 @@ SCHEMA = {
         {
             "Name": "Point_North_West",
             "TextLabels": {"MainDirection": "+", "Number": "4"},
-        }
-    ],
-    "36-9": [
-        {
-            "Name": "Isolation_Shortened_Horizontal_Number",
-            "TextLabels": {"Number": "3510", "IsolationName": "11", "SBLName": "B-C"},
         }
     ],
     "0-11": [
@@ -317,6 +338,22 @@ SCHEMA = {
             "TextLabels": {"Number": "3542", "IsolationName": "13", "SBLName": "B-C"},
         }
     ],
+    "34-10": [
+        {
+            "Name": "LineTrainSpawner",
+            "TextLabels": {"Destination": "Srebrna Polana"},
+            "Tracks": [{
+                "Name": "1B",
+                "Position": "35-9",
+                "Normal": True,
+            }, {
+                "Name": "2B",
+                "Position": "35-11",
+                "Normal": False,
+            }],
+            "Direction": "Left"
+        }
+    ],
     "14-9": [
         {
             "Name": "Point_North_East",
@@ -382,7 +419,7 @@ SCHEMA = {
         }
     ],
     "22-6": [
-        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz7_8/2"}}
+        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz7_8/02"}}
     ],
     "29-9": [{"Name": "TrainEnd_East", "TextLabels": {"ID": "SBL_B-C_1"}}],
     "19-8": [{"Name": "Platform1_South", "TextLabels": {"Index": "Peron 2"}}],
@@ -421,7 +458,7 @@ SCHEMA = {
     ],
     "22-10": [{"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz9/2"}}],
     "26-8": [
-        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz4_5/2"}}
+        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz4_5/21"}}
     ],
     "7-11": [
         {
@@ -465,20 +502,30 @@ SCHEMA = {
             "Name": "Isolation_Shortened_Horizontal_Number",
             "TextLabels": {"Number": "3504", "IsolationName": "Jz", "SBLName": "A-B"},
         }
+    ],    
+    "0-10": [
+        {
+            "Name": "LineTrainSpawner",
+            "TextLabels": {"Destination": "Stary Las"},
+            "Tracks": [{
+                "Name": "1Z",
+                "Position": "0-9",
+                "Normal": False,
+            }, {
+                "Name": "2Z",
+                "Position": "0-11",
+                "Normal": True,
+            }],
+            "Direction": "Right"
+        }
     ],
     "11-8": [
         {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz25_28/2"}}
     ],
     "10-9": [
-        {"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "Jz25_28"}}
+        {"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "Jz25_28/11"}}
     ],
     "21-7": [{"Name": "SemOnlyTrain_East", "TextLabels": {"Number": "G"}}],
-    "36-11": [
-        {
-            "Name": "Isolation_Shortened_Horizontal_Number",
-            "TextLabels": {"Number": "3510", "IsolationName": "25", "SBLName": "B-C"},
-        }
-    ],
     "15-6": [{"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz24/2"}}],
     "30-9": [{"Name": "SemOnlyTrain_West", "TextLabels": {"Number": "B"}}],
     "14-5": [
@@ -486,7 +533,7 @@ SCHEMA = {
     ],
     "28-9": [{"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "JtB"}}],
     "24-8": [
-        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz4_5/2"}}
+        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz4_5/12"}}
     ],
     "1-7": [{"Name": "To_East", "TextLabels": {"Index": "ToU"}}],
     "18-9": [
@@ -535,7 +582,7 @@ SCHEMA = {
             "Name": "LineBlockNew",
             "TextLabels": {
                 "Number": "2Z",
-                "Direction": "Left",
+                "Direction": "Right",
                 "Type": "PBL",
                 "BlockName": "C-Z",
             },

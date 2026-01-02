@@ -1,3 +1,4 @@
+from enum import Enum
 class Constants:
     MAIN_WIN_WIDTH = 1200
     MAIN_WIN_HEIGHT = 800
@@ -28,3 +29,14 @@ class Constants:
     POINT_CHANGE_DELAY = 2
     CROSSING_CHANGE_DELAY = 5
     BLOCKADE_CHANGE_DELAY = 4
+    
+    MAX_WAITING_TRAINS = 5
+    TRAIN_MOVE_SPEED = 0.4
+    
+    FINISHED_ROUTE_POINTS = 5
+    
+class MoveDirection(Enum):
+    LEFT = 0,
+    RIGHT = 1,
+    UP = 2,
+    BOTTOM = 3

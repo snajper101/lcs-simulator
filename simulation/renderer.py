@@ -6,6 +6,8 @@ from elements.point import Point
 from simulation.simulator import Simulator
 from elements.crossing import Crossing, CrossingState
 from elements.line_blockade import LineBlockade, BlocadeDirection
+from elements.train_spawner import TrainSpawner
+from elements.isolation import Isolation
 import math
 import time
 from datetime import datetime
@@ -24,6 +26,9 @@ class GameRenderer:
             return None
         
         return (int(self.camera_x + (grid_x * Constants.TILE_SIZE)), int(self.camera_y + (grid_y * Constants.TILE_SIZE)))
+    
+    def get_coordinates_from_position(self, position: Tuple[int, int]) -> Tuple:
+        return (int(self.camera_x + position[0]), int(self.camera_y + position[1])) 
   
     def draw_object_outline(self, grid_pos: str, element: Dict, pressed: bool, rect : pygame.Rect, colour: Tuple[int, int, int], index : int = 0) -> None:
         elem_name = element.get("Name", "")
@@ -36,7 +41,7 @@ class GameRenderer:
                     coord_south = self.get_coordinates_from_grid(crossing_south[0])
                     crossing_rect = pygame.Rect(coord_north[0], coord_north[1], Constants.TILE_SIZE, abs(coord_north[1] - coord_south[1]) + Constants.TILE_SIZE)
                     pygame.draw.rect(self.surface, colour, crossing_rect, 2, 4) 
-            elif not "Platform" in elem_name and not "Vertical" in elem_name and not "Curve" in elem_name:
+            elif not "Platform" in elem_name and not "LineTrainSpawner" in elem_name:
                 pygame.draw.rect(self.surface, colour, rect, 2, 4) 
         object = self.simulator.logical_elements.get(grid_pos)      
         if pressed and index == 0 and object and isinstance(object, Semaphore):
@@ -77,8 +82,7 @@ class GameRenderer:
         if pressed_positions is None:
             pressed_positions = []
 
-        for coord_str, elements in simulator.current_map_data.items():
-            
+        for coord_str, elements in simulator.current_map_data.items():            
             screen_x, screen_y = self.get_coordinates_from_grid(coord_str)
             
             if (screen_x < -Constants.TILE_SIZE or screen_x > surface.get_width() or 
@@ -90,7 +94,7 @@ class GameRenderer:
             real_cx, real_cy = rect.center
             
             object = simulator.logical_elements.get(coord_str)
-            semaphore, point, crossing, line_block = None, None, None, None
+            semaphore, point, crossing, line_block, train_spawner, isolation_ref = None, None, None, None, None, None
             if object and isinstance(object, Semaphore):
                 semaphore : Semaphore = object
                 if semaphore.signal_type == SignalType.SEMI_AUTO:
@@ -109,6 +113,10 @@ class GameRenderer:
                 crossing: Crossing = object
             elif object and isinstance(object, LineBlockade):
                 line_block: LineBlockade = object
+            elif object and isinstance(object, TrainSpawner):
+                train_spawner: TrainSpawner = object
+            elif object and isinstance(object, Isolation):
+                isolation_ref: Isolation = object
             else:
                 sem_colour = Constants.TRACK_COLOR
 
@@ -116,17 +124,17 @@ class GameRenderer:
                 elem_name = element.get("Name", "")
                 
                 track_color = Constants.TRACK_COLOR
-                isolation = None
                 if "TextLabels" in element:
                     labels = element.get("TextLabels")
                     if isolation_name := labels.get("IsolationName"):
-                        isolation : str = isolation_name.split("/")[0]
                         isolation_type : str = len(isolation_name.split("/")) == 2 and isolation_name.split("/")[1] or "0"
-                        if not isolation_type in ["0", "1", "2"]:
+                        if not isolation_type in ["0", "1", "2", "11", "12", "21", "22", "01", "02", "10", "20"]:
                             isolation_type = "0"
                         junctions : List[str] = isolation_name.replace("Jz", "").split("/")[0].split("_")
-                        junctions_ref = junctions[0] != '' and [ref for ref in simulator.points.values() if ref.number in junctions ] or []
-                        if isolation_ref := simulator.isolations.get(isolation):
+                        junctions_ref: List[Point] = [] 
+                        for junction in junctions:
+                            junctions_ref.extend([ref for ref in simulator.points.values() if junction == ref.number])
+                        if isolation_ref:
                             if isolation_ref.route:
                                 if isolation_type == "0":
                                     track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
@@ -134,8 +142,26 @@ class GameRenderer:
                                     track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
                                 elif isolation_type == "2" and len([ref for ref in junctions_ref if ref.direction == "-"]) > 0:
                                     track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                                elif isolation_type == "11" and len([ref for ref in junctions_ref if ref.direction == "-"]) == 0:
+                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                                elif isolation_type == "22" and len([ref for ref in junctions_ref if ref.direction == "+"]) == 0:
+                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                                elif len(junctions) > 1 and isolation_type == "12" and junctions_ref[0].direction == "+" and junctions_ref[1].direction == "-":
+                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                                elif len(junctions) > 1 and isolation_type == "01" and junctions_ref[1].direction == "+":
+                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                                elif len(junctions) > 1 and isolation_type == "02" and junctions_ref[1].direction == "-":
+                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                                elif len(junctions) > 1 and isolation_type == "21" and junctions_ref[0].direction == "-" and junctions_ref[1].direction == "+":
+                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                                elif len(junctions) > 1 and isolation_type == "10" and junctions_ref[0].direction == "+":
+                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                                elif len(junctions) > 1 and isolation_type == "20" and junctions_ref[0].direction == "-":
+                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
                 if point and len(point.routes) > 0:
                     track_color = point.routes[0].is_train_route and (0, 255, 0) or (255, 255, 0)
+                if hasattr(object, "occuping_trains") and len(object.occuping_trains) > 0:
+                    track_color = (255, 0, 0)
                 
                 if elem_name == "Non_Isolated_Horizontal":
                     pygame.draw.line(surface, track_color, (rect.left, cy), (rect.right, cy), Constants.LINE_ISOLATION_WIDTH)
@@ -448,7 +474,7 @@ class GameRenderer:
                 elif "Crossing_" in elem_name and crossing:
                     if not self.should_draw_crossing(crossing):
                         continue
-                    crossing_colour = crossing.state == CrossingState.OPENED and (255, 153, 255) or (len(crossing.routes) > 0 and (255, 255, 0) or Constants.TRACK_COLOR)
+                    crossing_colour = crossing.state == CrossingState.OPENED and (255, 153, 255) or (crossing.route_count > 0 and (255, 255, 0) or Constants.TRACK_COLOR)
                     tileSizeHalf = Constants.TILE_SIZE // 2
                     if "North" in elem_name:
                         points_left = [(rect.left + 2, rect.top + 4), 
@@ -486,55 +512,55 @@ class GameRenderer:
                     if "West" in elem_name:
                         horizontal_start = (rect.left, cy)
                         horizontal_end = (rect.left + 4, cy)
-                        pygame.draw.line(surface, Constants.TRACK_COLOR, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
+                        pygame.draw.line(surface, track_color, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
                         vertical_start = (cx, rect.bottom - 4)
                         vertical_end = (cx, rect.bottom)
-                        pygame.draw.line(surface, Constants.TRACK_COLOR, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
+                        pygame.draw.line(surface, track_color, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
                         curve = [(rect.left + 4, cy + Constants.ISOLATION_WIDTH // 2), 
                             (rect.left + 4, cy - (Constants.ISOLATION_WIDTH - 1 )  // 2),
                             (cx + Constants.ISOLATION_WIDTH // 2, rect.bottom - 4), 
                             (cx - Constants.ISOLATION_WIDTH // 2, rect.bottom - 4),
                         ]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, curve)
+                        pygame.draw.polygon(surface, track_color, curve)
                     elif "South" in elem_name:
                         horizontal_start = (rect.right, cy)
                         horizontal_end = (rect.right - 4, cy)
-                        pygame.draw.line(surface, Constants.TRACK_COLOR, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
+                        pygame.draw.line(surface, track_color, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
                         vertical_start = (cx, rect.bottom - 4)
                         vertical_end = (cx, rect.bottom)
-                        pygame.draw.line(surface, Constants.TRACK_COLOR, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
+                        pygame.draw.line(surface, track_color, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
                         curve = [(rect.right - 4, cy + Constants.ISOLATION_WIDTH // 2), 
                             (rect.right - 4, cy - (Constants.ISOLATION_WIDTH - 1 ) // 2),
                             (cx - (Constants.ISOLATION_WIDTH - 1 ) // 2, rect.bottom - 4),
                             (cx + Constants.ISOLATION_WIDTH // 2, rect.bottom - 4), 
                         ]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, curve)      
+                        pygame.draw.polygon(surface, track_color, curve)      
                     elif "East" in elem_name:
                         horizontal_start = (rect.right, cy)
                         horizontal_end = (rect.right - 4, cy)
-                        pygame.draw.line(surface, Constants.TRACK_COLOR, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
+                        pygame.draw.line(surface, track_color, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
                         vertical_start = (cx, rect.top + 4)
                         vertical_end = (cx, rect.top)
-                        pygame.draw.line(surface, Constants.TRACK_COLOR, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
+                        pygame.draw.line(surface, track_color, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
                         curve = [(rect.right - 4, cy + Constants.ISOLATION_WIDTH // 2), 
                             (rect.right - 4, cy - (Constants.ISOLATION_WIDTH - 1 ) // 2),
                             (cx + Constants.ISOLATION_WIDTH // 2, rect.top + 4), 
                             (cx - (Constants.ISOLATION_WIDTH - 1 ) // 2, rect.top + 4),
                         ]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, curve) 
+                        pygame.draw.polygon(surface, track_color, curve) 
                     else:
                         horizontal_start = (rect.left, cy)
                         horizontal_end = (rect.left + 4, cy)
-                        pygame.draw.line(surface, Constants.TRACK_COLOR, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
+                        pygame.draw.line(surface, track_color, horizontal_start, horizontal_end, Constants.ISOLATION_WIDTH)
                         vertical_start = (cx, rect.top + 4)
                         vertical_end = (cx, rect.top)
-                        pygame.draw.line(surface, Constants.TRACK_COLOR, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
+                        pygame.draw.line(surface, track_color, vertical_start, vertical_end, Constants.ISOLATION_WIDTH)
                         curve = [(rect.left + 4, cy + Constants.ISOLATION_WIDTH // 2), 
                             (rect.left + 4, cy - (Constants.ISOLATION_WIDTH - 1 ) // 2),
                             (cx - (Constants.ISOLATION_WIDTH - 1 ) // 2, rect.top + 4),
                             (cx + Constants.ISOLATION_WIDTH // 2, rect.top + 4), 
                         ]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, curve)
+                        pygame.draw.polygon(surface, track_color, curve)
                 elif "TrainEnd_" in elem_name:
                     if semaphore and semaphore.ending_route:
                         color = (255, 0, 0)
@@ -569,7 +595,7 @@ class GameRenderer:
                         pygame.draw.polygon(surface, Constants.TRACK_COLOR, points, 2)
                 if "TextLabels" in element:
                     labels = element["TextLabels"]
-                    label_text = labels.get("Number", labels.get("Index", labels.get("IsolationName", labels.get("StationName" ))))
+                    label_text = labels.get("Number", labels.get("Index", labels.get("IsolationName", labels.get("StationName", labels.get("Destination")))))
                     direction = "" if point is None else point.direction
                     if label_text:
                         if "StationName" in labels:
@@ -579,46 +605,51 @@ class GameRenderer:
                             clock_text_surf = self.font_title.render(datetime.now().strftime("%H:%M:%S"), True, Constants.TRACK_COLOR)
                             clock_text_rect = clock_text_surf.get_rect(center=(cx, cy - 30))
                             surface.blit(clock_text_surf, clock_text_rect)
+                        elif "LineTrainSpawner" in elem_name and train_spawner:
+                            text = f"{label_text} {len(train_spawner.waiting_trains)}"
+                            text_surf = self.font.render(text, True, len(train_spawner.waiting_trains) > 0 and (255,255,255) or Constants.TRACK_COLOR)
+                            text_rect = text_surf.get_rect(center=(cx, cy))
+                            surface.blit(text_surf, text_rect)
                         elif "Isolation_Shortened_Horizontal_Number" == elem_name:
-                            text_surf = self.small_font.render(str(label_text), True, Constants.TRACK_COLOR)
+                            text_surf = self.small_font.render(label_text, True, track_color)
                             text_rect = text_surf.get_rect(center=(cx, cy - 10))
                             surface.blit(text_surf, text_rect)
                         elif "Sem" in elem_name or "To_" in elem_name or "ShuntEnd" in elem_name:
                             color = ( "OnlyShunt" in elem_name or "ShuntEnd" in elem_name ) and (0, 255, 255) or (255, 255, 0)
-                            text_surf = self.sem_font.render(str(label_text), True, color)
+                            text_surf = self.sem_font.render(label_text, True, color)
                             text_rect = text_surf.get_rect(center=(cx, cy + 18))
                             surface.blit(text_surf, text_rect)
                         elif "SignalReapeter" in elem_name:
-                            text_surf = self.sem_font.render(str(label_text), True, Constants.TRACK_COLOR)
+                            text_surf = self.sem_font.render(label_text, True, Constants.TRACK_COLOR)
                             text_rect = text_surf.get_rect(center=(cx, cy + 18))
                             surface.blit(text_surf, text_rect)
                         elif "Platform" in elem_name:
                             sign = "South" in elem_name and -1 or 1
-                            text_surf = self.font.render(str(label_text), True, Constants.TRACK_COLOR)
+                            text_surf = self.font.render(label_text, True, Constants.TRACK_COLOR)
                             text_rect = text_surf.get_rect(center=(cx, cy + sign * ("Horizontal" in elem_name and -1 or 5)))
                             surface.blit(text_surf, text_rect)
                         elif "LineBlockNew" == elem_name:
-                            text_surf = self.sem_font.render(str(label_text), True, (255, 255, 0))
+                            text_surf = self.sem_font.render(label_text, True, (255, 255, 0))
                             text_rect = text_surf.get_rect(center=(cx, rect.top - 10))
                             surface.blit(text_surf, text_rect)
                         elif "Point_South" in elem_name:
-                            text_surf = self.small_font.render(f"{label_text} {direction}", True, Constants.TRACK_COLOR)
+                            text_surf = self.small_font.render(f"{label_text} {direction}", True, track_color)
                             text_rect = text_surf.get_rect(center=(cx, cy - 10))
                             surface.blit(text_surf, text_rect)
                         elif "Point_North" in elem_name:
-                            text_surf = self.small_font.render(f"{label_text} {direction}", True, Constants.TRACK_COLOR)
+                            text_surf = self.small_font.render(f"{label_text} {direction}", True, track_color)
                             text_rect = text_surf.get_rect(center=(cx, cy + 10))
                             surface.blit(text_surf, text_rect)
                         elif "Crossing_North" == elem_name:
-                            text_surf = self.small_font.render(str(label_text), True, Constants.TRACK_COLOR)
+                            text_surf = self.small_font.render(label_text, True, Constants.TRACK_COLOR)
                             text_rect = text_surf.get_rect(center=(cx, cy - 20))
                             surface.blit(text_surf, text_rect)
                         elif "Crossing_South" == elem_name:
-                            text_surf = self.small_font.render(str(label_text), True, Constants.TRACK_COLOR)
+                            text_surf = self.small_font.render(label_text, True, Constants.TRACK_COLOR)
                             text_rect = text_surf.get_rect(center=(cx, cy + 20))
                             surface.blit(text_surf, text_rect)
                         elif "Derailer_North" == elem_name:
-                            text_surf = self.sem_font.render(str(label_text), True, (255,255,255))
+                            text_surf = self.sem_font.render(label_text, True, (255,255,255))
                             text_rect = text_surf.get_rect(center=(cx, cy - 18))
                             surface.blit(text_surf, text_rect)
                         elif number_text := labels.get("NumberText", ""):
@@ -630,5 +661,14 @@ class GameRenderer:
             if coord_str in pressed_positions:
                 self.draw_object_outline(coord_str, element, True, rect, (0, 255, 255), pressed_positions.index(coord_str))
             elif mouse_pos and rect.collidepoint(mouse_pos):
-                if not "Platform" in elem_name and not "Vertical" in elem_name and not "Curve" in elem_name:
+                if not "Platform" in elem_name and not "LineTrainSpawner" in elem_name:
                     self.draw_object_outline(coord_str, element, False, rect, (255, 255, 0)) 
+        
+        for train in self.simulator.active_trains:
+            position = self.get_coordinates_from_position(train.position)
+            pygame.draw.circle(surface, (255, 0, 0), position, 5)
+            
+        text = f"Punkty: {simulator.user_points}"
+        points_text_surf = self.font.render(text, True, (255,255,255))
+        points_text_rect = points_text_surf.get_rect(center=(surface.get_width() - self.font.size(text)[0] // 2 - 10, 20))
+        surface.blit(points_text_surf, points_text_rect)

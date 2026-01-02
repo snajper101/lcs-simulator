@@ -2,6 +2,7 @@ from enum import Enum
 from elements.track_elements import TrackElement
 from typing import Dict, Tuple, List
 from elements.route import Route
+from constants import MoveDirection
 class SignalState(Enum):
     S1 = 0
     S2 = 1
@@ -24,6 +25,8 @@ class Semaphore(TrackElement):
         self.active_route : Route = None
         self.ending_route : Route = None
         self.simulator = simulator
+        self.direction : MoveDirection = "West" in name and MoveDirection.LEFT or MoveDirection.RIGHT
+        self.movable = False
         
         if "SemOnlyTrain" in name:
             self.register_action("PRZEBIEG POCIĄGOWY", self.create_train_route)
@@ -70,14 +73,20 @@ class Semaphore(TrackElement):
     def accept_route(self, route: Route):
         self.state = SignalState.S2
         self.active_route = route
-        self.register_action("ZW", self.cancel_route)
+        self.register_action("ZW", self.action_release_route)
         
     def accept_ending_route(self, route: Route):
         self.ending_route = route
-        
-    def cancel_route(self) -> None:
+    
+    def action_release_route(self):
         if not self.active_route:
             return
+        self.simulator.cancel_route(self, self.active_route.advance_signal, self.active_route)
+        
+    def cancel_route(self) -> None:
+        self.active_route = None
+        self.ending_route = None
+        self.state = SignalState.S1
         
     def __str__(self):
         return self.number

@@ -4,6 +4,7 @@ import pygame_gui.elements as pygame_elements
 from constants import Constants
 import maps
 from elements.track_elements import TrackElement
+from elements.train_spawner import TrainSpawner
 from typing import List
 
 def create_main_menu(manager: pygame_gui.UIManager) -> tuple[pygame_elements.UIButton, pygame_elements.UIButton, pygame_elements.UIButton]:
@@ -109,5 +110,34 @@ def create_actions_menu(manager: pygame_gui.UIManager, track_element : TrackElem
         button.user_data = {"object": track_element, "action": action_name}
         buttons.append(button)
         x_offset += width
+    
+    return menu_panel, buttons
+
+def create_train_spawner_menu(manager: pygame_gui.UIManager, spawner: TrainSpawner) -> tuple[pygame_elements.UIPanel, List[pygame_elements.UIButton]]:
+    panel_width = 300
+    panel_height = max(50, len(spawner.waiting_trains) * 40 + 20)
+    
+    panel_rect = pygame.Rect(((Constants.MAIN_WIN_WIDTH - panel_width) // 2, 50), 
+                             (panel_width, panel_height))
+
+    menu_panel = pygame_gui.elements.UIPanel(
+        relative_rect=panel_rect,
+        manager=manager,
+        starting_height=10
+    )
+
+    buttons = []
+    y_offset = 10
+    for train in spawner.waiting_trains:
+        button = pygame_gui.elements.UIButton(
+           relative_rect=pygame.Rect(10, y_offset, panel_width - 20, 30),
+            text=f"Pociąg do {train.destination}",
+            manager=manager,
+            container=menu_panel
+        )
+        
+        button.user_data = {"object": spawner, "action": "select_train", "train": train}
+        buttons.append(button)
+        y_offset += 40
     
     return menu_panel, buttons

@@ -24,9 +24,11 @@ class Route():
             
         self.isolations : List[Isolation] = []
         for isolation in self.isolations_str:
-            if isolation in simulator.isolations:
-                if isolation_ref := simulator.isolations[isolation]:
-                    self.isolations.append(isolation_ref)
+            for element in simulator.logical_elements.values():
+                if isinstance(element, Isolation):
+                    isolation_ref : Isolation = element
+                    if isolation_ref.number == isolation:
+                        self.isolations.append(isolation_ref)
                     
     def is_occupied(self) -> bool:
         return False
