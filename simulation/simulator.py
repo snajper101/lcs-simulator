@@ -59,8 +59,8 @@ class Simulator:
                 if "Sem" in name:
                     self.logical_elements[coord_str] = Semaphore(name, grid_pos, SignalType.SEMI_AUTO, number, self)
                     self.signals[number] = self.logical_elements[coord_str]
-                elif "To_" in name:
-                    self.logical_elements[coord_str] = Semaphore(name, grid_pos, SignalType.REPEATER, number, self)
+                elif "To_" in name or "SignalReapeter" in name:
+                    self.logical_elements[coord_str] = Semaphore(name, grid_pos, SignalType.REPEATER, number, self, labels.get("AdvanceSignal"))
                     repeater_signals.append(self.logical_elements[coord_str])
                 elif "TrainEnd" in name:
                     self.logical_elements[coord_str] = Semaphore(name, grid_pos, SignalType.EXIT, number, self)
@@ -97,7 +97,11 @@ class Simulator:
             signal.load_routes(self.dependencies.get(signal.number, {}), self.signals.values())
         for signal in repeater_signals:
             advance_signal = signal.number
-            if advance_signal_ref := self.signals.get(advance_signal.replace("To", "")):
+            if "To" in advance_signal:
+                advance_signal_str = advance_signal.replace("To", "")
+            else:
+                advance_signal_str = signal.advance_str
+            if advance_signal_ref := self.signals.get(advance_signal_str):
                 signal.set_advance_signal( advance_signal_ref )
     
     def get_map_object_by_name(self, object_name : str) -> Dict:
@@ -124,6 +128,9 @@ class Simulator:
     def create_route(self, semaphore : Semaphore, end_semaphore: Semaphore, route : Route, is_train : bool) -> bool:
         for isolation in route.isolations:
             if isolation.is_occupied():
+                return False
+        for direction, point in route.points:
+            if len(point.occuping_trains) > 0:
                 return False
             
         advance_signal : Semaphore
@@ -165,10 +172,10 @@ class Simulator:
                 point.add_route(route)
             for crossing in route.crossings:
                 crossing.add_route(route)
-            semaphore.accept_route(route)
             end_semaphore.accept_ending_route(route)
+            semaphore.accept_route(route)
 
-        self.delay_action(wait_time, finalize_route)
+        self.delay_action(wait_time + 0.2, finalize_route)
         
         return True
         
@@ -221,7 +228,7 @@ class Simulator:
     def update(self, dt):
         for element in self.logical_elements.values():
             if isinstance(element, TrainSpawner):
-                element.update(dt)
+                element.update(self, dt)
             elif hasattr(element, "update"):
                 element.update()
             
@@ -253,7 +260,7 @@ class Simulator:
                     while element:
                         if isinstance(element, Semaphore):
                             semaphore : Semaphore = element 
-                            if semaphore.state == SignalState.S1 and semaphore.direction in train.move_directions and semaphore.signal_type in [SignalType.AUTO, SignalType.SEMI_AUTO]:
+                            if semaphore.state == SignalState.S1 and semaphore.direction in train.move_directions and semaphore.signal_type in [SignalType.AUTO, SignalType.SEMI_AUTO] and not semaphore.is_shunt_signal:
                                 skip_train = True
                                 break
                             elif semaphore.direction in train.move_directions:

@@ -458,7 +458,7 @@ SCHEMA = {
     ],
     "22-10": [{"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz9/2"}}],
     "26-8": [
-        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz4_5/21"}}
+        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz4_5/20"}}
     ],
     "7-11": [
         {
@@ -533,7 +533,7 @@ SCHEMA = {
     ],
     "28-9": [{"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "JtB"}}],
     "24-8": [
-        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz4_5/12"}}
+        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz4_5/02"}}
     ],
     "1-7": [{"Name": "To_East", "TextLabels": {"Index": "ToU"}}],
     "18-9": [

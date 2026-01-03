@@ -72,10 +72,10 @@ def main_loop(window_surface : pygame.surface):
                                     first_semaphore : Semaphore = first_object
                                     advance_semaphore : Semaphore = selected_object
                                     first_semaphore.set_advance_selected_signal(advance_semaphore)
-                                    panel, action_buttons = interface.create_actions_menu(ui_manager, first_semaphore)
+                                    action_buttons = interface.create_actions_menu(ui_manager, first_semaphore)
                                     
                             elif hasattr(selected_object, "actions") and len(selected_object.actions) > 0:
-                                panel, action_buttons = interface.create_actions_menu(ui_manager, selected_object)
+                                action_buttons = interface.create_actions_menu(ui_manager, selected_object)
                     
                     if event.button == 2:
                         is_dragging = True
@@ -141,28 +141,39 @@ def main_loop(window_surface : pygame.surface):
                         ui_manager.clear_and_reset()
                         simulator = Simulator() 
                         play_button, leaderboard_button, settings_button = interface.create_main_menu(ui_manager)
+                elif state == "game_over":
+                    if event.ui_element == game_over_return_button:
+                        state = "menu"
+                        ui_manager.clear_and_reset()
+
+                        simulator = Simulator() 
+                        play_button, leaderboard_button, settings_button = interface.create_main_menu(ui_manager)
                 elif state == "settings":
                     pass
                 
         window_surface.fill((0, 0, 0))
         
-        if simulator is not None:
+        if simulator is not None and state != "game_over":
             simulator.update(time_delta)
         
         if state == "game":
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_LEFT]:
-                camera_x += Constants.CAMERA_MOVE_SPEED * time_delta
-            if keys[pygame.K_RIGHT]:
-                camera_x -= Constants.CAMERA_MOVE_SPEED * time_delta
-            if keys[pygame.K_UP]:
-                camera_y += Constants.CAMERA_MOVE_SPEED * time_delta
-            if keys[pygame.K_DOWN]:
-                camera_y -= Constants.CAMERA_MOVE_SPEED * time_delta
+            if simulator.user_points < 0:
+                state = "game_over"
+                game_over_return_button = interface.create_game_over_menu(ui_manager, simulator.user_points)
+            else:
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_LEFT]:
+                    camera_x += Constants.CAMERA_MOVE_SPEED * time_delta
+                if keys[pygame.K_RIGHT]:
+                    camera_x -= Constants.CAMERA_MOVE_SPEED * time_delta
+                if keys[pygame.K_UP]:
+                    camera_y += Constants.CAMERA_MOVE_SPEED * time_delta
+                if keys[pygame.K_DOWN]:
+                    camera_y -= Constants.CAMERA_MOVE_SPEED * time_delta
 
-            mouse_pos = pygame.mouse.get_pos()
-            
-            renderer.draw_map(window_surface, simulator, (camera_x, camera_y), mouse_pos, selected_positions)
+                mouse_pos = pygame.mouse.get_pos()
+                
+                renderer.draw_map(window_surface, simulator, (camera_x, camera_y), mouse_pos, selected_positions)
             
         ui_manager.update(time_delta)
         ui_manager.draw_ui(window_surface)

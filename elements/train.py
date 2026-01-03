@@ -39,19 +39,19 @@ class Train():
         
     def get_max_delay(self) -> float:
         if self.train_type == TrainType.PASSENGER:
-            return 20
+            return 40
         elif self.train_type == TrainType.CARGO:
-            return 45
+            return 50
         else:
-            return 10
+            return 30
         
     def get_delay_cost(self) -> float:
         if self.train_type == TrainType.PASSENGER:
-            return 2
+            return 4
         elif self.train_type == TrainType.CARGO:
-            return 1
+            return 2
         else:
-            return 5
+            return 8    
         
     def get_max_speed(self) -> float:
         if self.train_type == TrainType.PASSENGER:
@@ -101,20 +101,21 @@ class Train():
             return self.max_speed
         
     def deduce_move_direction_from_point(self, point):
-        if point.direction != "-":
-            return
-        if "South" in point.name:
-            if not MoveDirection.BOTTOM in self.move_directions and not MoveDirection.UP in self.move_directions:
-                self.move_directions.append(MoveDirection.BOTTOM)
-        elif "North" in point.name:
-            if not MoveDirection.BOTTOM in self.move_directions and not MoveDirection.UP in self.move_directions:
+        if point.direction == "+":
+            self.move_directions = [self.default_direction]
+        else:
+            if "South" in point.name:
+                if not MoveDirection.BOTTOM in self.move_directions and not MoveDirection.UP in self.move_directions:
+                    self.move_directions.append(MoveDirection.BOTTOM)
+            elif "North" in point.name:
+                if not MoveDirection.BOTTOM in self.move_directions and not MoveDirection.UP in self.move_directions:
                     self.move_directions.append(MoveDirection.UP)
-        if "East" in point.name:
-            if not MoveDirection.RIGHT in self.move_directions and not MoveDirection.LEFT in self.move_directions:
-                self.move_directions.append(MoveDirection.RIGHT)
-        elif "West" in point.name:
-            if not MoveDirection.RIGHT in self.move_directions and not MoveDirection.LEFT in self.move_directions:
-                self.move_directions.append(MoveDirection.LEFT)        
+            if "East" in point.name:
+                if not MoveDirection.RIGHT in self.move_directions and not MoveDirection.LEFT in self.move_directions:
+                    self.move_directions.append(MoveDirection.RIGHT)
+            elif "West" in point.name:
+                if not MoveDirection.RIGHT in self.move_directions and not MoveDirection.LEFT in self.move_directions:
+                    self.move_directions.append(MoveDirection.LEFT)        
         
     def deduce_move_direction_from_vertical_isolation(self):
         if MoveDirection.LEFT in self.move_directions:
@@ -123,11 +124,13 @@ class Train():
             self.move_directions.remove(MoveDirection.RIGHT)
             
     def deduce_move_direction_from_curve(self, element_name: str):
-        if MoveDirection.UP in self.move_directions:
+        if MoveDirection.UP in self.move_directions or MoveDirection.BOTTOM in self.move_directions:
             if not self.default_direction in self.move_directions:
                 self.move_directions.append(self.default_direction)
-        elif "West" in element_name and not MoveDirection.BOTTOM in self.move_directions:
+        elif ("West" in element_name or "South" in element_name ) and not MoveDirection.BOTTOM in self.move_directions:
             self.move_directions.append(MoveDirection.BOTTOM)
+        elif ("East" in element_name or "North" in element_name ) and not MoveDirection.UP in self.move_directions:
+            self.move_directions.append(MoveDirection.UP)
         
     def calculate_advance_grid_pos(self, grid_pos: str) -> str | None:
         try:

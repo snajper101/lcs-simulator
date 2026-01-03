@@ -99,13 +99,15 @@ class GameRenderer:
             if object and isinstance(object, Semaphore):
                 semaphore : Semaphore = object
                 if semaphore.signal_type == SignalType.SEMI_AUTO:
-                    if semaphore.state == SignalState.S1:  
+                    if semaphore.state == SignalState.S1 or semaphore.state == SignalState.MS1:  
                         sem_colour = (255, 0, 0)
                     else:
                         sem_colour = (0, 255, 0)
                 elif semaphore.signal_type == SignalType.REPEATER:
                     if semaphore.advance_signal and semaphore.advance_signal.state == SignalState.S1:
-                        sem_colour = (255, 125, 0)
+                        sem_colour = "SignalReapeter" in semaphore.name and (255, 0, 0) or (255, 125, 0)
+                    elif not semaphore.advance_signal:
+                        sem_colour = (255, 0, 0)
                     else:
                         sem_colour = (0, 255, 0)
             elif object and isinstance(object, Point):
@@ -557,12 +559,12 @@ class GameRenderer:
                         points = [(cx + tileSizeHalf - 8, cy - tileSizeHalf + 8), 
                             (cx + tileSizeHalf - 8, cy + tileSizeHalf - 8), 
                             (cx - tileSizeHalf + 8, cy)]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points, 2)
+                        pygame.draw.polygon(surface, sem_colour, points, 2)
                     elif "East" in elem_name:
                         points = [(cx - tileSizeHalf + 8, cy - tileSizeHalf + 8), 
                             (cx - tileSizeHalf + 8, cy + tileSizeHalf - 8), 
                             (cx + tileSizeHalf - 8, cy)]
-                        pygame.draw.polygon(surface, Constants.TRACK_COLOR, points, 2)
+                        pygame.draw.polygon(surface, sem_colour, points, 2)
                 if "TextLabels" in element:
                     labels = element["TextLabels"]
                     label_text = labels.get("Number", labels.get("Index", labels.get("IsolationName", labels.get("StationName", labels.get("Destination")))))
@@ -577,7 +579,12 @@ class GameRenderer:
                             surface.blit(clock_text_surf, clock_text_rect)
                         elif "LineTrainSpawner" in elem_name and train_spawner:
                             text = f"{label_text} {len(train_spawner.waiting_trains)}"
-                            text_surf = self.font.render(text, True, len(train_spawner.waiting_trains) > 0 and (255,255,255) or Constants.TRACK_COLOR)
+                            color = Constants.TRACK_COLOR
+                            if train_spawner.delayed:
+                                color = (255, 125, 0)
+                            elif len(train_spawner.waiting_trains) > 0:
+                                color = (255,255,255)
+                            text_surf = self.font.render(text, True, color)
                             text_rect = text_surf.get_rect(center=(cx, cy))
                             surface.blit(text_surf, text_rect)
                         elif "Isolation_Shortened_Horizontal_Number" == elem_name:

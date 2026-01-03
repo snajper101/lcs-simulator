@@ -6,6 +6,7 @@ from constants import MoveDirection
 class SignalState(Enum):
     S1 = 0
     S2 = 1
+    MS1 = 2
     
 class SignalType(Enum):
     AUTO = 0
@@ -14,11 +15,11 @@ class SignalType(Enum):
     EXIT = 3
 
 class Semaphore(TrackElement):
-    def __init__(self, name: str, position: Tuple, signal_type: SignalType, number: str, simulator):
+    def __init__(self, name: str, position: Tuple, signal_type: SignalType, number: str, simulator, advance_str: str = None):
         super().__init__(name, position)
-        self.state = SignalState.S1
         self.signal_type = signal_type
-        self.is_shunt_signal = "Shunt" in name
+        self.is_shunt_signal = "OnlyShunt" in name
+        self.state = "OnlyShunt" in name and SignalState.MS1 or SignalState.S1
         self.number = number
         self.advance_selected = None
         self.routes : List[Route] = []
@@ -27,6 +28,8 @@ class Semaphore(TrackElement):
         self.simulator = simulator
         self.direction : MoveDirection = "West" in name and MoveDirection.LEFT or MoveDirection.RIGHT
         self.movable = False
+        self.advance_signal = None
+        self.advance_str = advance_str
         
         if "SemOnlyTrain" in name:
             self.register_action("PRZEBIEG POCIĄGOWY", self.create_train_route)

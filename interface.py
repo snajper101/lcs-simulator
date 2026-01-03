@@ -1,6 +1,7 @@
 import pygame
 import pygame_gui
 import pygame_gui.elements as pygame_elements
+from pygame_gui.core import ObjectID
 from constants import Constants
 import maps
 from elements.track_elements import TrackElement
@@ -84,34 +85,24 @@ def create_pause_menu(manager: pygame_gui.UIManager) -> tuple[pygame_elements.UI
 def create_actions_menu(manager: pygame_gui.UIManager, track_element : TrackElement) -> List[pygame_gui.elements.UIButton]:
     font = pygame.font.Font(pygame.font.get_default_font(),)
     panel_width = sum([font.size(action_name)[0] + 5 for action_name in track_element.actions.keys()]) + 10 
-    panel_height = 40
-    
-    panel_rect = pygame.Rect(((Constants.MAIN_WIN_WIDTH - panel_width) // 2, 50), 
-                             (panel_width, panel_height))
-
-    menu_panel = pygame_gui.elements.UIPanel(
-        relative_rect=panel_rect,
-        manager=manager,
-        starting_height=10
-    )
 
     buttons = []
-    x_offset = 5
+    x_offset = ( Constants.MAIN_WIN_WIDTH - panel_width ) // 2 + 5
     for action_name in track_element.actions.keys():
         width = font.size(action_name)[0] + 5
         button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(x_offset, 5, width, 30),
             text=action_name,
             manager=manager,
-            container=menu_panel,
-            tool_tip_text=f"Execute {action_name}"
+            tool_tip_text=f"Wykonaj {action_name}",
+            object_id=ObjectID(class_id='@actions_button')
         )
         
         button.user_data = {"object": track_element, "action": action_name}
         buttons.append(button)
         x_offset += width
     
-    return menu_panel, buttons
+    return buttons
 
 def create_train_spawner_menu(manager: pygame_gui.UIManager, spawner: TrainSpawner) -> tuple[pygame_elements.UIPanel, List[pygame_elements.UIButton]]:
     panel_width = 300
@@ -141,3 +132,40 @@ def create_train_spawner_menu(manager: pygame_gui.UIManager, spawner: TrainSpawn
         y_offset += 40
     
     return menu_panel, buttons
+
+def create_game_over_menu(manager: pygame_gui.UIManager, score: int) -> pygame_elements.UIButton:
+    panel_width = 300
+    panel_height = 150
+    
+    panel_rect = pygame.Rect((Constants.MAIN_WIN_WIDTH - panel_width) // 2,
+                             (Constants.MAIN_WIN_HEIGHT - panel_height) // 2,
+                             panel_width,
+                             panel_height)
+    
+    panel = pygame_gui.elements.UIPanel(
+        relative_rect=panel_rect,
+        manager=manager
+    )
+
+    pygame_gui.elements.UILabel(
+        relative_rect=pygame.Rect(0, 20, panel_width, 30),
+        text="KONIEC GRY",
+        manager=manager,
+        container=panel
+    )
+    
+    pygame_gui.elements.UILabel(
+        relative_rect=pygame.Rect(0, 50, panel_width, 30),
+        text=f"Wynik końcowy: {score}",
+        manager=manager,
+        container=panel
+    )
+    
+    return_button = pygame_elements.UIButton(
+        relative_rect=pygame.Rect((panel_width - 150) // 2, 90, 150, 40),
+        text='Menu Główne',
+        manager=manager,
+        container=panel
+    )
+    
+    return return_button

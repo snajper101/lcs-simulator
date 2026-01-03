@@ -13,15 +13,23 @@ class TrainSpawner():
         self.possible_destinations: List[str] = [destination for destination in possible_destinations if destination != origin_name]
         self.tracks : List[ Track ] = tracks
         
-        self.spawn_timer = random.uniform(1, 2.0)
-        self.min_delay = 5.0
-        self.max_delay = 10.0
+        self.spawn_timer = random.uniform(5.0, 20.0)
+        self.min_delay = 30.0 / len(self.tracks)
+        self.max_delay = 90.0 / len(self.tracks)
+        self.delayed = False
+        self.last_spawn_time = 0
         
-    def update(self, dt: float):
+    def update(self, simulator, dt: float):
         self.spawn_timer -= dt
+        if len(self.waiting_trains) > 0:
+            self.last_spawn_time += dt
         if self.spawn_timer <= 0:
             self.spawn_train()
             self.spawn_timer = random.uniform(self.min_delay, self.max_delay)
+        if self.last_spawn_time > Constants.TRAIN_SPAWNER_MAX_DELAY:
+            self.last_spawn_time = 0
+            simulator.user_points -= Constants.TRAIN_SPAWNER_DELAY_PENALTY
+            self.delayed = True
     
     def spawn_train(self):
         if len(self.waiting_trains) < Constants.MAX_WAITING_TRAINS:
@@ -31,6 +39,8 @@ class TrainSpawner():
     def add_train_to_line(self, train : Train, track : Track):
         if track.line_block.state == ( track.direction == "Left" and BlocadeDirection.LEFT or BlocadeDirection.RIGHT) and not track.isolation.is_occupied() and len(track.isolation.occuping_trains) == 0:
             if train in self.waiting_trains:
+                self.last_spawn_time = 0
+                self.delayed = False
                 self.waiting_trains.remove(train)
                 
                 grid_x, grid_y = track.position

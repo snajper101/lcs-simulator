@@ -8,7 +8,7 @@ class Isolation():
         self.is_sbl : bool = is_sbl
         
         self.isolation_type : str = len(number.split("/")) == 2 and number.split("/")[1] or "0"
-        if not self.isolation_type in ["0", "1", "2", "11", "12", "21", "22", "01", "02", "10", "20"]:
+        if not self.isolation_type in ["0", "1", "2", "11", "12", "21", "22", "01", "02", "10", "20", "ab+", "ab-", "cd+", "cd-"]:
             self.isolation_type = "0"
         
         self.route = None
@@ -18,14 +18,13 @@ class Isolation():
         
     def route_valid_for_isolation(self, route) -> bool:
         point_id = lambda x: x.replace("+", "").replace("-", "")
-        print(self.junctions, self.isolation_type, route.dependencies, [point_id(route_junction) for route_junction in route.dependencies])
         for junction in self.junctions:
-            if not junction in [point_id(route_junction) for route_junction in route.dependencies]:
+            if not junction in [point_id(route_junction).replace("ab", "").replace("cd", "") for route_junction in route.dependencies]:
                 return True
             else:
                 plus_junctions = [point_id(route_junction) for route_junction in route.dependencies if "+" in route_junction and point_id(route_junction) in self.junctions]
                 minus_junctions = [point_id(route_junction) for route_junction in route.dependencies if "-" in route_junction and point_id(route_junction) in self.junctions]
-                self_junctions = [route_junction for route_junction in route.dependencies if point_id(route_junction) in self.junctions]
+                self_junctions = sorted([route_junction for route_junction in route.dependencies if point_id(route_junction).replace("ab", "").replace("cd", "") in self.junctions], key=point_id)
                 if self.isolation_type == "0":
                     return True
                 elif self.isolation_type == "1" and len(plus_junctions) > 0:
@@ -46,7 +45,9 @@ class Isolation():
                     return True
                 elif len(self.junctions) > 1 and self.isolation_type == "10" and "+" in self_junctions[0]:
                     return True
-                elif len(self.junctions) > 1 and self.isolation_type == "20" and "+-" in self_junctions[0]:
+                elif len(self.junctions) > 1 and self.isolation_type == "20" and "-" in self_junctions[0]:
+                    return True
+                elif f"{junction}{self.isolation_type}" in self_junctions:
                     return True
         return False
         
