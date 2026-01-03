@@ -32,8 +32,10 @@ class Constants:
     
     MAX_WAITING_TRAINS = 5
     TRAIN_MOVE_SPEED = 0.4
+    TRAIN_SPRITE_SIZE = (20, 20)
     
     FINISHED_ROUTE_POINTS = 5
+    WRONG_DESTINATION_PENALTY = 5
     
 class MoveDirection(Enum):
     LEFT = 0,

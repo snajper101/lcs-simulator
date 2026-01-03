@@ -3,6 +3,7 @@ from constants import Constants, MoveDirection
 import math
 import random
 from enum import Enum
+import pygame
 
 class TrainType(Enum):
     PASSENGER = 0,
@@ -14,8 +15,8 @@ class Train():
         self.position : Tuple[float, float] = (0.0, 0.0)
         self.destination : str = destination
         self.spawned : bool = False
-        self.train_type : TrainType = TrainType.PASSENGER
-        self.max_speed : int = 120
+        self.train_type : TrainType = self.draw_train_type()
+        self.max_speed : int = self.get_max_speed()
         self.speed_limit : int | None = None
         self.move_directions : List[MoveDirection] = []
         self.default_direction: MoveDirection = None
@@ -24,11 +25,14 @@ class Train():
         self.advance_grid_pos : str | None = None
         self.delay = False
         self.last_update_time = 0
+        self.current_route = None
+        self.speed_mult : float = 1.0
+        self.load_train_icon()
         
     def generate_train_number(self) -> str:
         if self.train_type == TrainType.PASSENGER:
             return str(random.randint(10000, 99999))
-        elif self.train_number == TrainType.CARGO:
+        elif self.train_type == TrainType.CARGO:
             return str(random.randint(100000, 999999))
         else:
             return str(random.randint(1000, 9999))
@@ -36,7 +40,7 @@ class Train():
     def get_max_delay(self) -> float:
         if self.train_type == TrainType.PASSENGER:
             return 20
-        elif self.train_number == TrainType.CARGO:
+        elif self.train_type == TrainType.CARGO:
             return 45
         else:
             return 10
@@ -44,16 +48,53 @@ class Train():
     def get_delay_cost(self) -> float:
         if self.train_type == TrainType.PASSENGER:
             return 2
-        elif self.train_number == TrainType.CARGO:
+        elif self.train_type == TrainType.CARGO:
             return 1
         else:
             return 5
+        
+    def get_max_speed(self) -> float:
+        if self.train_type == TrainType.PASSENGER:
+            return 150
+        elif self.train_type == TrainType.CARGO:
+            return 100
+        else:
+            return 200
+        
+    def draw_train_type(self):
+        draw = random.randint(1, 10)
+        if draw == 1:
+            return TrainType.HIGH_SPEED
+        elif draw > 1 and draw < 7:
+            return TrainType.CARGO
+        else:
+            return TrainType.PASSENGER
+    
+    def fill(self, surface: pygame.Surface, color: pygame.Color):
+        w, h = surface.get_size()
+        r, g, b, _ = color
+        for x in range(w):
+            for y in range(h):
+                a = surface.get_at((x, y))[3]
+                surface.set_at((x, y), pygame.Color(r, g, b, a))
+    
+    def load_train_icon(self):
+        if self.train_type == TrainType.PASSENGER:
+            self.train_icon = pygame.image.load("assets/train.png").convert_alpha()
+        elif self.train_type == TrainType.CARGO:
+            self.train_icon = pygame.image.load("assets/train-cargo.png").convert_alpha()
+        else:
+            self.train_icon = pygame.image.load("assets/train-high-speed.png").convert_alpha()
+        self.fill(self.train_icon, pygame.Color(255, 255, 255))
+        self.train_icon = pygame.transform.scale(self.train_icon, Constants.TRAIN_SPRITE_SIZE)
         
     def set_spawn_direction(self, directions : List[MoveDirection]):
         self.move_directions = directions
         self.default_direction = directions[0]
         
     def get_current_speed(self) -> int:    
+        if self.current_route:
+            self.speed_limit = self.current_route.speed_limit
         if self.speed_limit:
             return min(self.max_speed, self.speed_limit)
         else:
@@ -108,7 +149,7 @@ class Train():
     def get_next_position(self, dt: float, offset: int = 0) -> Tuple[int, int]:
         directions_count = len(self.move_directions)
         position = self.position
-        speed : float = dt * self.get_current_speed() * Constants.TRAIN_MOVE_SPEED * (1 / math.sqrt(directions_count) )
+        speed : float = dt * self.get_current_speed() * Constants.TRAIN_MOVE_SPEED * (1 / math.sqrt(directions_count) ) * self.speed_mult
         for direction in self.move_directions:
             if direction == MoveDirection.LEFT:
                 position = (position[0] - speed - offset * Constants.TILE_SIZE, position[1])
@@ -128,12 +169,15 @@ class Train():
             self.last_update_time += dt
         else:
             self.last_update_time = 0
+            if self.delay:
+                self.fill(self.train_icon, pygame.Color(255, 255, 255))
             self.delay = False
         self.position = position
-        if not self.delay and self.last_update_time > self.get_max_delay():
+        if self.last_update_time > self.get_max_delay():
+            self.last_update_time = 0
             simulator.user_points -= self.get_delay_cost() 
-            print("TEST")
             self.delay = True
+            self.fill(self.train_icon, pygame.Color(255, 125, 0))
     
     def destroy(self):
         pass

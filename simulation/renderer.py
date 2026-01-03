@@ -1,5 +1,5 @@
 import pygame
-from constants import Constants
+from constants import Constants, MoveDirection
 from typing import Dict, Tuple, List
 from elements.semaphore import Semaphore, SignalState, SignalType
 from elements.point import Point
@@ -18,6 +18,7 @@ class GameRenderer:
         self.font = pygame.font.SysFont("Arial", 12, bold=True)
         self.small_font = pygame.font.SysFont("Arial", 10)
         self.sem_font = pygame.font.SysFont("Arial", 14, bold=True)
+        self.destination_font = pygame.font.SysFont("Arial", 8)
   
     def get_coordinates_from_grid(self, coord_str: str) -> Tuple | None:
         try:
@@ -124,40 +125,9 @@ class GameRenderer:
                 elem_name = element.get("Name", "")
                 
                 track_color = Constants.TRACK_COLOR
-                if "TextLabels" in element:
-                    labels = element.get("TextLabels")
-                    if isolation_name := labels.get("IsolationName"):
-                        isolation_type : str = len(isolation_name.split("/")) == 2 and isolation_name.split("/")[1] or "0"
-                        if not isolation_type in ["0", "1", "2", "11", "12", "21", "22", "01", "02", "10", "20"]:
-                            isolation_type = "0"
-                        junctions : List[str] = isolation_name.replace("Jz", "").split("/")[0].split("_")
-                        junctions_ref: List[Point] = [] 
-                        for junction in junctions:
-                            junctions_ref.extend([ref for ref in simulator.points.values() if junction == ref.number])
-                        if isolation_ref:
-                            if isolation_ref.route:
-                                if isolation_type == "0":
-                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
-                                elif isolation_type == "1" and len([ref for ref in junctions_ref if ref.direction == "+"]) > 0:
-                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
-                                elif isolation_type == "2" and len([ref for ref in junctions_ref if ref.direction == "-"]) > 0:
-                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
-                                elif isolation_type == "11" and len([ref for ref in junctions_ref if ref.direction == "-"]) == 0:
-                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
-                                elif isolation_type == "22" and len([ref for ref in junctions_ref if ref.direction == "+"]) == 0:
-                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
-                                elif len(junctions) > 1 and isolation_type == "12" and junctions_ref[0].direction == "+" and junctions_ref[1].direction == "-":
-                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
-                                elif len(junctions) > 1 and isolation_type == "01" and junctions_ref[1].direction == "+":
-                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
-                                elif len(junctions) > 1 and isolation_type == "02" and junctions_ref[1].direction == "-":
-                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
-                                elif len(junctions) > 1 and isolation_type == "21" and junctions_ref[0].direction == "-" and junctions_ref[1].direction == "+":
-                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
-                                elif len(junctions) > 1 and isolation_type == "10" and junctions_ref[0].direction == "+":
-                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
-                                elif len(junctions) > 1 and isolation_type == "20" and junctions_ref[0].direction == "-":
-                                    track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
+                if isolation_ref:
+                    if isolation_ref.route:
+                        track_color = isolation_ref.is_train_route and (0, 255, 0) or (255, 255, 0)
                 if point and len(point.routes) > 0:
                     track_color = point.routes[0].is_train_route and (0, 255, 0) or (255, 255, 0)
                 if hasattr(object, "occuping_trains") and len(object.occuping_trains) > 0:
@@ -666,7 +636,11 @@ class GameRenderer:
         
         for train in self.simulator.active_trains:
             position = self.get_coordinates_from_position(train.position)
-            pygame.draw.circle(surface, (255, 0, 0), position, 5)
+            rect = train.train_icon.get_rect(center=position)
+            surface.blit(train.train_icon, rect)
+            text_surf = self.destination_font.render(train.destination, True, (255,255,255))
+            text_rect = text_surf.get_rect(center=(position[0], position[1] + 16))
+            surface.blit(text_surf, text_rect)
             
         text = f"Punkty: {simulator.user_points}"
         points_text_surf = self.font.render(text, True, (255,255,255))

@@ -520,10 +520,10 @@ SCHEMA = {
         }
     ],
     "11-8": [
-        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz25_28/2"}}
+        {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz25_28/02"}}
     ],
     "10-9": [
-        {"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "Jz25_28/11"}}
+        {"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "Jz25_28/01"}}
     ],
     "21-7": [{"Name": "SemOnlyTrain_East", "TextLabels": {"Number": "G"}}],
     "15-6": [{"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz24/2"}}],

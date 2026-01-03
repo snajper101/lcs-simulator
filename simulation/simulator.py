@@ -32,6 +32,7 @@ class Simulator:
         self.points: Dict[str, Point] = {}
         self.crossings : Dict[str, Crossing] = {}
         self.line_blocks : Dict[str, LineBlockade] = {}
+        self.isolations : List[ Isolation ] = []
         
         train_spawners : List[ Tuple[str, str, str]] = []
         
@@ -49,10 +50,12 @@ class Simulator:
                         else:
                             size = (1, 1)
 
-                        isolation_ref = Isolation(name, isolation_name)
+                        isolation_ref = Isolation(name, isolation_name, labels.get("SBLName") != None)
+                        self.isolations.append(isolation_ref)
                         for x in range(size[0]):
                             for y in range(size[1]):
                                 self.logical_elements[f"{grid_pos[0] + x}-{grid_pos[1] + y}"] = isolation_ref
+                
                 if "Sem" in name:
                     self.logical_elements[coord_str] = Semaphore(name, grid_pos, SignalType.SEMI_AUTO, number, self)
                     self.signals[number] = self.logical_elements[coord_str]
@@ -204,6 +207,8 @@ class Simulator:
             train.destroy()
             if train.destination == destination:
                 self.user_points += Constants.FINISHED_ROUTE_POINTS
+            else:
+                self.user_points -= Constants.WRONG_DESTINATION_PENALTY
             
             self.active_trains.remove(train)
         
@@ -254,6 +259,7 @@ class Simulator:
                             elif semaphore.direction in train.move_directions:
                                 semaphore.state = SignalState.S1
                                 semaphore.active_route = None
+                                semaphore.ending_route = None
                         if isinstance(element, Isolation):
                             isolation : Isolation = element
                             current_isolation = self.get_element_at_grid_pos(train.last_grid_pos)
@@ -302,6 +308,10 @@ class Simulator:
                     train.deduce_move_direction_from_curve(element.name)
                 else:
                     train.move_directions = [train.default_direction]
+                if hasattr(element, "is_sbl") and element.is_sbl:
+                    train.speed_mult = 0.5
+                else:
+                    train.speed_mult = 1.0
                 if hasattr(element, "add_train"):
                     element.add_train(train) 
         for train in trains_to_remove[::-1]:
