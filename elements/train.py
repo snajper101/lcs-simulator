@@ -41,11 +41,11 @@ class Train():
         
     def get_max_delay(self) -> float:
         if self.train_type == TrainType.PASSENGER:
-            return 40
-        elif self.train_type == TrainType.CARGO:
             return 50
+        elif self.train_type == TrainType.CARGO:
+            return 60
         else:
-            return 30
+            return 40
         
     def get_delay_cost(self) -> float:
         if self.train_type == TrainType.PASSENGER:
@@ -53,7 +53,7 @@ class Train():
         elif self.train_type == TrainType.CARGO:
             return 2
         else:
-            return 8    
+            return 6    
         
     def get_train_type_name(self) -> str:
         if self.train_type == TrainType.PASSENGER:
