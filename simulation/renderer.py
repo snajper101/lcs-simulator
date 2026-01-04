@@ -11,6 +11,8 @@ from elements.isolation import Isolation
 import math
 import time
 from datetime import datetime
+import interface
+import pygame_gui
 
 class GameRenderer:
     def __init__(self):
@@ -42,7 +44,7 @@ class GameRenderer:
                     coord_south = self.get_coordinates_from_grid(crossing_south[0])
                     crossing_rect = pygame.Rect(coord_north[0], coord_north[1], Constants.TILE_SIZE, abs(coord_north[1] - coord_south[1]) + Constants.TILE_SIZE)
                     pygame.draw.rect(self.surface, colour, crossing_rect, 2, 4) 
-            elif not "Platform" in elem_name and not "LineTrainSpawner" in elem_name:
+            elif not "Platform" in elem_name:
                 pygame.draw.rect(self.surface, colour, rect, 2, 4) 
         object = self.simulator.logical_elements.get(grid_pos)      
         if pressed and index == 0 and object and isinstance(object, Semaphore):
@@ -73,7 +75,7 @@ class GameRenderer:
             return round(left * 1.5) < left * 1.5
             
   
-    def draw_map(self, surface: pygame.Surface, simulator: Simulator, camera_offset: Tuple[int, int], mouse_pos: Tuple[int, int] = None, pressed_positions : List[str] = None) -> None:
+    def draw_map(self, surface: pygame.Surface, ui_manager: pygame_gui.UIManager, simulator: Simulator, camera_offset: Tuple[int, int], mouse_pos: Tuple[int, int] = None, pressed_positions : List[str] = None) -> None:
         surface.fill(Constants.BG_COLOR)
         
         self.camera_x, self.camera_y = camera_offset
@@ -83,8 +85,11 @@ class GameRenderer:
         if pressed_positions is None:
             pressed_positions = []
 
+        x_coords = sorted(set(int(x.split("-")[0]) for x in simulator.current_map_data.keys()))
+
         for coord_str, elements in simulator.current_map_data.items():            
             screen_x, screen_y = self.get_coordinates_from_grid(coord_str)
+            grid_x, grid_y = map(int, coord_str.split('-'))
             
             if (screen_x < -Constants.TILE_SIZE or screen_x > surface.get_width() or 
                 screen_y < -Constants.TILE_SIZE or screen_y > surface.get_height()):
@@ -125,7 +130,6 @@ class GameRenderer:
 
             for element in elements:
                 elem_name = element.get("Name", "")
-                
                 track_color = Constants.TRACK_COLOR
                 if isolation_ref:
                     if isolation_ref.route:
@@ -584,9 +588,16 @@ class GameRenderer:
                                 color = (255, 125, 0)
                             elif len(train_spawner.waiting_trains) > 0:
                                 color = (255,255,255)
+                            x_size, y_size = self.font.size(text)
                             text_surf = self.font.render(text, True, color)
-                            text_rect = text_surf.get_rect(center=(cx, cy))
+                            if abs(grid_x - x_coords[0]) < abs(grid_x - x_coords[-1]):
+                                text_rect = text_surf.get_rect(center=(rect.left + x_size // 2, cy))
+                            else:
+                                text_rect = text_surf.get_rect(center=(rect.right - x_size // 2, cy))
                             surface.blit(text_surf, text_rect)
+                            text_rect.height = Constants.TILE_SIZE
+                            text_rect.centery = cy
+                            rect = text_rect
                         elif "Isolation_Shortened_Horizontal_Number" == elem_name:
                             text_surf = self.small_font.render(label_text, True, track_color)
                             text_rect = text_surf.get_rect(center=(cx, cy - 10))
@@ -635,10 +646,29 @@ class GameRenderer:
                             bg_rect = pygame.Rect( text_rect.left - 6, text_rect.top - 4, text_rect.width + 6 * 2, text_rect.height + 4 * 2 )
                             pygame.draw.rect(surface, (0, 0, 0), bg_rect)            
                             surface.blit(text_surf, text_rect)
-            if coord_str in pressed_positions:
-                self.draw_object_outline(coord_str, element, True, rect, (0, 255, 255), pressed_positions.index(coord_str))
-            elif mouse_pos and rect.collidepoint(mouse_pos):
-                if not "Platform" in elem_name and not "LineTrainSpawner" in elem_name:
+
+            pressed = False
+            for pressed_coord_str in pressed_positions:
+                pressed_coord = self.get_coordinates_from_grid(pressed_coord_str)
+                if pressed_coord and rect.collidepoint(pressed_coord):
+                    pressed = True
+                    self.draw_object_outline(pressed_coord_str, element, True, rect, (0, 255, 255), pressed_positions.index(pressed_coord_str))
+                    selected_object = simulator.logical_elements.get(coord_str)
+                    if selected_object:
+                        ui_manager.clear_and_reset()
+                        if isinstance(selected_object, TrainSpawner):
+                            interface.create_train_spawner_menu(ui_manager, selected_object)            
+                        elif isinstance(selected_object, Semaphore) and len(pressed_positions) == 2:
+                            if first_object := simulator.logical_elements.get(pressed_positions[0]):
+                                first_semaphore : Semaphore = first_object
+                                advance_semaphore : Semaphore = selected_object
+                                first_semaphore.set_advance_selected_signal(advance_semaphore)
+                                interface.create_actions_menu(ui_manager, first_semaphore)
+                        elif hasattr(selected_object, "actions") and len(selected_object.actions) > 0:
+                            interface.create_actions_menu(ui_manager, selected_object)
+                    break
+            if not pressed and mouse_pos and rect.collidepoint(mouse_pos):
+                if not "Platform" in elem_name:
                     self.draw_object_outline(coord_str, element, False, rect, (255, 255, 0)) 
         
         for train in self.simulator.active_trains:

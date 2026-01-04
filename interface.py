@@ -6,51 +6,106 @@ from constants import Constants
 import maps
 from elements.track_elements import TrackElement
 from elements.train_spawner import TrainSpawner
-from typing import List
+from typing import List, Tuple, Dict
 
-def create_main_menu(manager: pygame_gui.UIManager) -> tuple[pygame_elements.UIButton, pygame_elements.UIButton, pygame_elements.UIButton]:
+def create_main_menu(manager: pygame_gui.UIManager) -> Tuple[pygame_elements.UIButton, pygame_elements.UIButton]:
+    center_x = Constants.MAIN_WIN_WIDTH // 2
+    center_y = Constants.MAIN_WIN_HEIGHT // 2
+    
+    pygame_elements.UILabel(
+        relative_rect=pygame.Rect(center_x - 500, center_y - 200, 1000, 120),
+        text="SYMULATOR LCS",
+        manager=manager,
+        object_id=ObjectID(class_id='@title_label')
+    )
+    
     play_button = pygame_elements.UIButton(
-        relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - Constants.BUTTON_WIDTH) // 2, (Constants.MAIN_WIN_HEIGHT - 2 * Constants.BUTTON_HEIGHT) // 2, 150, 40),
+        relative_rect=pygame.Rect(center_x - Constants.BUTTON_WIDTH // 2, center_y - Constants.BUTTON_HEIGHT // 2 - 5, Constants.BUTTON_WIDTH, Constants.BUTTON_HEIGHT),
         text='Graj', manager=manager
     )
     
     leaderboard_button = pygame_elements.UIButton(
-        relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - Constants.BUTTON_WIDTH) // 2, (Constants.MAIN_WIN_HEIGHT) // 2, 150, 40),
+        relative_rect=pygame.Rect(center_x - Constants.BUTTON_WIDTH // 2, center_y + Constants.BUTTON_HEIGHT // 2 + 5, Constants.BUTTON_WIDTH, Constants.BUTTON_HEIGHT),
         text='Wyniki', manager=manager
     )
     
-    settings_button = pygame_elements.UIButton(
-        relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - Constants.BUTTON_WIDTH) // 2, (Constants.MAIN_WIN_HEIGHT + 2 * Constants.BUTTON_HEIGHT) // 2, 150, 40),
-        text='Ustawienia', manager=manager
-    )
-    
-    return ( play_button, leaderboard_button, settings_button )
+    return play_button, leaderboard_button
 
-def create_maps_menu(manager: pygame_gui.UIManager) -> pygame_elements.UIButton:
+def create_leaderboard_menu(manager: pygame_gui.UIManager, results : Dict[str, int]) -> pygame_elements.UIButton:
+    center_x = Constants.MAIN_WIN_WIDTH // 2
+    center_y = Constants.MAIN_WIN_HEIGHT // 2
+    
+    pygame_elements.UILabel(
+        relative_rect=pygame.Rect(center_x - 400, center_y - 200, 800, 120),
+        text="WYNIKI",
+        manager=manager,
+        object_id=ObjectID(class_id='@title_label')
+    )
+    
+    y_offset = 50
+    for map, score in results.items():
+        panel = pygame_gui.elements.UIPanel(
+            relative_rect=pygame.Rect(center_x - 100, center_y - y_offset, 200, 30),
+            manager=manager,
+        )
+        pygame_elements.UILabel(
+            relative_rect=pygame.Rect(0, 0, 200, 24),
+            text=f"{map.replace('_', ' ').title()}: {score}",
+            manager=manager,
+            container = panel,
+            object_id=ObjectID(class_id='@result_label')
+        )
+        y_offset -= 35
+    
+    return_button = pygame_elements.UIButton(
+        relative_rect=pygame.Rect(center_x - Constants.BUTTON_WIDTH // 2, center_y - y_offset + Constants.BUTTON_HEIGHT // 2 + 5, Constants.BUTTON_WIDTH, Constants.BUTTON_HEIGHT),
+        text='Wróc', manager=manager
+    )
+    
+    return return_button
+
+def create_maps_menu(manager: pygame_gui.UIManager, selected_map: str) -> Tuple[pygame_gui.elements.UIImage, pygame_elements.UILabel]:
+    center_x = Constants.MAIN_WIN_WIDTH // 2
+    center_y = Constants.MAIN_WIN_HEIGHT // 2
+    
+    offset = 150
+    
+    icon = pygame.image.load(f"assets/{selected_map}.png").convert_alpha()
+    if icon:
+        map_image = pygame_gui.elements.UIImage(
+            relative_rect=pygame.Rect(center_x - 400, center_y - 500 + offset, 800, 400), 
+            manager=manager,
+            image_surface = icon
+        )
+    
     pygame_gui.elements.UIButton(
-        relative_rect=pygame.Rect(200, 200, 50, 50), text="<", manager=manager
+        relative_rect=pygame.Rect(center_x - Constants.BUTTON_WIDTH // 2 - 50, center_y - Constants.BUTTON_HEIGHT * 2 - 5 + offset, 50, 50), 
+        text="<", manager=manager
     )
     
     pygame_gui.elements.UIButton(
-        relative_rect=pygame.Rect(550, 200, 50, 50), text=">", manager=manager
+        relative_rect=pygame.Rect(center_x + Constants.BUTTON_WIDTH // 2, center_y - Constants.BUTTON_HEIGHT * 2 - 5 + offset, 50, 50), 
+        text=">", manager=manager
     )
     
     map_label = pygame_gui.elements.UILabel(
-        relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - 300) // 2, 240, 300, 30 ),
-        text=f"Mapa: {maps.get_available_maps()[0]}", manager=manager
+        relative_rect=pygame.Rect(center_x - Constants.BUTTON_WIDTH // 2, center_y - Constants.BUTTON_HEIGHT * 2 - 5 + offset, Constants.BUTTON_WIDTH, Constants.BUTTON_HEIGHT ),
+        text=selected_map.replace("_", " ").title(), manager=manager,
+        object_id=ObjectID(class_id='@map_label')
     )
 
-    pygame_gui.elements.UIButton(
-        relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - 150) // 2, 300, 150, 40 ),
+    pygame_elements.UIButton(
+        relative_rect=pygame.Rect(center_x - Constants.BUTTON_WIDTH // 2, center_y - Constants.BUTTON_HEIGHT // 2 - 5 + offset, Constants.BUTTON_WIDTH, Constants.BUTTON_HEIGHT),
+        text="Uruchom", manager=manager,
+        object_id=ObjectID(object_id='#start_button')
+    )
+    
+    pygame_elements.UIButton(
+        relative_rect=pygame.Rect(center_x - Constants.BUTTON_WIDTH // 2, center_y + Constants.BUTTON_HEIGHT // 2 + 5 + offset, Constants.BUTTON_WIDTH, Constants.BUTTON_HEIGHT),
         text="Powrót", manager=manager
     )
-    
-    pygame_gui.elements.UIButton(
-        relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - 150) // 2, 350, 150, 40), 
-        text="Uruchom", manager=manager
-    )
-    
-    return map_label
+
+    return map_image, map_label
 
 
 def create_settings_menu(manager: pygame_gui.UIManager) -> None:
@@ -59,25 +114,25 @@ def create_settings_menu(manager: pygame_gui.UIManager) -> None:
         text="Powrót", manager=manager
     )
     
-def create_pause_menu(manager: pygame_gui.UIManager) -> tuple[pygame_elements.UIButton, pygame_elements.UIButton]:
-    panel_width = 300
-    panel_height = 200
-    pygame.Rect(
-        (Constants.MAIN_WIN_WIDTH - panel_width) // 2,
-        (Constants.MAIN_WIN_HEIGHT - panel_height) // 2,
-        panel_width,
-        panel_height
+def create_pause_menu(manager: pygame_gui.UIManager) -> Tuple[pygame_elements.UIButton, pygame_elements.UIButton]:    
+    center_x = Constants.MAIN_WIN_WIDTH // 2
+    center_y = Constants.MAIN_WIN_HEIGHT // 2
+    
+    pygame_elements.UILabel(
+        relative_rect=pygame.Rect(center_x - 200, center_y - 200, 400, 200),
+        text="PAUZA",
+        manager=manager,
+        object_id=ObjectID(class_id='@pause_label')
     )
     
-    
     resume_button = pygame_elements.UIButton(
-        relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - 150) // 2, (Constants.MAIN_WIN_HEIGHT - 60) // 2, 150, 40),
+        relative_rect=pygame.Rect(center_x - Constants.BUTTON_WIDTH // 2, center_y - Constants.BUTTON_HEIGHT // 2 - 5, Constants.BUTTON_WIDTH, Constants.BUTTON_HEIGHT),
         text='Wznów', manager=manager
     )
     
     main_menu_button = pygame_elements.UIButton(
-        relative_rect=pygame.Rect((Constants.MAIN_WIN_WIDTH - 150) // 2, (Constants.MAIN_WIN_HEIGHT + 60) // 2, 150, 40),
-        text='Menu Główne', manager=manager
+        relative_rect=pygame.Rect(center_x - Constants.BUTTON_WIDTH // 2, center_y + Constants.BUTTON_HEIGHT // 2 + 5, Constants.BUTTON_WIDTH, Constants.BUTTON_HEIGHT),
+        text="Zakończ grę i menu", manager=manager
     )
     
     return resume_button, main_menu_button
@@ -94,7 +149,6 @@ def create_actions_menu(manager: pygame_gui.UIManager, track_element : TrackElem
             relative_rect=pygame.Rect(x_offset, 5, width, 30),
             text=action_name,
             manager=manager,
-            tool_tip_text=f"Wykonaj {action_name}",
             object_id=ObjectID(class_id='@actions_button')
         )
         
@@ -104,68 +158,56 @@ def create_actions_menu(manager: pygame_gui.UIManager, track_element : TrackElem
     
     return buttons
 
-def create_train_spawner_menu(manager: pygame_gui.UIManager, spawner: TrainSpawner) -> tuple[pygame_elements.UIPanel, List[pygame_elements.UIButton]]:
-    panel_width = 300
-    panel_height = max(50, len(spawner.waiting_trains) * 40 + 20)
+def create_train_spawner_menu(manager: pygame_gui.UIManager, spawner: TrainSpawner):
+    if len(spawner.waiting_trains) == 0:
+        return
     
-    panel_rect = pygame.Rect(((Constants.MAIN_WIN_WIDTH - panel_width) // 2, 50), 
+    panel_width = 300
+    panel_height = len(spawner.waiting_trains) * 40 + 15
+    panel_rect = pygame.Rect(((Constants.MAIN_WIN_WIDTH - panel_width) // 2, 5), 
                              (panel_width, panel_height))
 
     menu_panel = pygame_gui.elements.UIPanel(
         relative_rect=panel_rect,
         manager=manager,
-        starting_height=10
     )
 
     buttons = []
     y_offset = 10
     for train in spawner.waiting_trains:
         button = pygame_gui.elements.UIButton(
-           relative_rect=pygame.Rect(10, y_offset, panel_width - 20, 30),
-            text=f"Pociąg do {train.destination}",
+            relative_rect=pygame.Rect(10, y_offset, panel_width - 20, 30),
+            text=f"{train.get_train_type_name().title()} -> {train.destination}",
             manager=manager,
-            container=menu_panel
+            container=menu_panel,
+            object_id=ObjectID(class_id='@trains_button', object_id=spawner.delayed and '#delayed_spawner_button' or ''),
         )
         
         button.user_data = {"object": spawner, "action": "select_train", "train": train}
         buttons.append(button)
         y_offset += 40
-    
-    return menu_panel, buttons
 
-def create_game_over_menu(manager: pygame_gui.UIManager, score: int) -> pygame_elements.UIButton:
-    panel_width = 300
-    panel_height = 150
+def create_game_over_menu(manager: pygame_gui.UIManager) -> pygame_elements.UIButton:
+    center_x = Constants.MAIN_WIN_WIDTH // 2
+    center_y = Constants.MAIN_WIN_HEIGHT // 2
     
-    panel_rect = pygame.Rect((Constants.MAIN_WIN_WIDTH - panel_width) // 2,
-                             (Constants.MAIN_WIN_HEIGHT - panel_height) // 2,
-                             panel_width,
-                             panel_height)
-    
-    panel = pygame_gui.elements.UIPanel(
-        relative_rect=panel_rect,
-        manager=manager
-    )
-
-    pygame_gui.elements.UILabel(
-        relative_rect=pygame.Rect(0, 20, panel_width, 30),
+    pygame_elements.UILabel(
+        relative_rect=pygame.Rect(center_x - 300, center_y - 200, 600, 100),
         text="KONIEC GRY",
         manager=manager,
-        container=panel
+        object_id=ObjectID(class_id='@game_over_label')
     )
-    
-    pygame_gui.elements.UILabel(
-        relative_rect=pygame.Rect(0, 50, panel_width, 30),
-        text=f"Wynik końcowy: {score}",
+    pygame_elements.UILabel(
+        relative_rect=pygame.Rect(center_x - 200, center_y - 100, 400, 50),
+        text="PRZEGRAŁES",
         manager=manager,
-        container=panel
+        object_id=ObjectID(class_id='@lost_label')
     )
     
     return_button = pygame_elements.UIButton(
-        relative_rect=pygame.Rect((panel_width - 150) // 2, 90, 150, 40),
-        text='Menu Główne',
-        manager=manager,
-        container=panel
+        relative_rect=pygame.Rect(center_x - Constants.BUTTON_WIDTH // 2, center_y, Constants.BUTTON_WIDTH, Constants.BUTTON_HEIGHT),
+        text="Powrót do menu", manager=manager
     )
     
     return return_button
+

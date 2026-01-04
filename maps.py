@@ -5,7 +5,7 @@ from typing import Tuple, Dict
 
 def get_available_maps() -> list[str]:
     path = "stations"
-    return [f.replace(".py", "") for f in listdir(path) if isfile(join(path, f))]
+    return sorted([f.replace(".py", "") for f in listdir(path) if isfile(join(path, f))])
 
 class Maps:
     def __init__(self, map: str):

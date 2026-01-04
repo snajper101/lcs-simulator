@@ -3,15 +3,29 @@
     {
         "colours": 
         {
-            "normal_border": "White",
-            "normal_bg": "SlateGray",
-            "normal_text": "White"
+            "normal_border": "#787878",
+            "normal_bg": "#202027",
+            "normal_text": "#dcdcdc"
+        },
+        "font":
+        {
+            "name": "arial",
+            "size": "20",
+            "bold": "1",
+            "italic": "0"
         },
         "misc":
         {
             "shape": "rounded_rectangle",
             "shape_corner_radius": "10",
             "border_width": "2"
+        }
+    },
+    "#start_button": {
+        "colours": 
+        {
+            "normal_border": "#00ff00",
+            "hovered_border": "#00ff00"
         }
     },
     "@actions_button": 
@@ -27,6 +41,109 @@
             "shape": "rounded_rectangle",
             "shape_corner_radius": "10",
             "border_width": "2"
+        },
+        "font":
+        {
+            "name": "arial",
+            "size": "16",
+            "bold": "1",
+            "italic": "0"
+        }
+    },
+    "@trains_button": 
+    {
+        "colours": 
+        {
+            "normal_border": "White",
+            "normal_bg": "#dcdcdc",
+            "normal_text": "Black"
+        },
+        "misc":
+        {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10",
+            "border_width": "2"
+        },
+        "font":
+        {
+            "name": "arial",
+            "size": "18",
+            "bold": "1",
+            "italic": "0"
+        }
+    },
+    "#delayed_spawner_button": {
+        "colours": 
+        {
+            "normal_text": "#ff7d00"
+        }
+    },
+    "@title_label":
+    {
+        "font":
+        {
+            "name": "arial",
+            "size": "100",
+            "bold": "1",
+            "italic": "0"
+        }
+    },
+    "@result_label":
+    {
+        "font":
+        {
+            "name": "arial",
+            "size": "20",
+            "bold": "1",
+            "italic": "0"
+        },
+        "colours":
+        {
+            "normal_text": "#c5cbd8"
+        }
+    },
+    "@map_label":
+    {
+        "font":
+        {
+            "name": "arial",
+            "size": "24",
+            "bold": "1",
+            "italic": "0"
+        }
+    },
+    "@pause_label":
+    {
+        "font":
+        {
+            "name": "arial",
+            "size": "100",
+            "bold": "1",
+            "italic": "0"
+        }
+    },
+    "@game_over_label":
+    {
+        "font":
+        {
+            "name": "arial",
+            "size": "100",
+            "bold": "1",
+            "italic": "0"
+        },
+        "colours":
+        {
+            "normal_text": "#ff4400"
+        }
+    },
+    "@lost_label":
+    {
+        "font":
+        {
+            "name": "arial",
+            "size": "48",
+            "bold": "1",
+            "italic": "0"
         }
     }
 }

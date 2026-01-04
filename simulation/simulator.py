@@ -24,6 +24,7 @@ class Simulator:
         self.user_points : int = 100
     
     def load_map(self, selected_map: Maps) -> None:
+        self.map : Maps = selected_map
         self.current_map_data = selected_map.schema
         self.dependencies = selected_map.dependencies
         self.logical_elements : Dict[str, Any] = {}

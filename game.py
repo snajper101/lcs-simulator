@@ -8,8 +8,10 @@ from simulation.simulator import Simulator
 from simulation.renderer import GameRenderer
 from elements.semaphore import Semaphore
 from elements.train_spawner import TrainSpawner
+from effects import DotGridBackground
+from profiles.data_manager import DataStore
 
-def main_loop(window_surface : pygame.surface):
+def main_loop(window_surface : pygame.surface, data_store: DataStore):
     clock: pygame.time.Clock = pygame.time.Clock()
     
     ui_manager: pygame_gui.UIManager = pygame_gui.UIManager((Constants.MAIN_WIN_WIDTH, Constants.MAIN_WIN_HEIGHT), theme_path="assets/theme.json")
@@ -20,7 +22,9 @@ def main_loop(window_surface : pygame.surface):
     simulator = Simulator()
     renderer = GameRenderer()
     
-    play_button, leaderboard_button, settings_button = interface.create_main_menu(ui_manager)
+    background_effect = DotGridBackground(spacing=20, dot_radius=2)
+    
+    play_button, leaderboard_button = interface.create_main_menu(ui_manager)
     map_index = 0
     
     camera_x = Constants.GRID_OFFSET_X
@@ -60,22 +64,6 @@ def main_loop(window_surface : pygame.surface):
                                 selected_positions.append(clicked_pos)
                         else:
                             selected_positions = [clicked_pos]
-                
-                        selected_object = simulator.logical_elements.get(clicked_pos)
-                        if selected_object:
-                            ui_manager.clear_and_reset()
-                            if isinstance(selected_object, TrainSpawner):
-                                panel, action_buttons = interface.create_train_spawner_menu(ui_manager, selected_object)
-                                
-                            elif isinstance(selected_object, Semaphore) and len(selected_positions) == 2:
-                                if first_object := simulator.logical_elements.get(selected_positions[0]):
-                                    first_semaphore : Semaphore = first_object
-                                    advance_semaphore : Semaphore = selected_object
-                                    first_semaphore.set_advance_selected_signal(advance_semaphore)
-                                    action_buttons = interface.create_actions_menu(ui_manager, first_semaphore)
-                                    
-                            elif hasattr(selected_object, "actions") and len(selected_object.actions) > 0:
-                                action_buttons = interface.create_actions_menu(ui_manager, selected_object)
                     
                     if event.button == 2:
                         is_dragging = True
@@ -97,22 +85,29 @@ def main_loop(window_surface : pygame.surface):
                     if event.ui_element == play_button:
                         ui_manager.clear_and_reset()
                         state = "map_select"
-                        map_label = interface.create_maps_menu(ui_manager)
-                    elif event.ui_element == settings_button:
+                        map_index = 0
+                        map_image, map_label = interface.create_maps_menu(ui_manager, maps.get_available_maps()[map_index])
+                    elif event.ui_element == leaderboard_button:
                         ui_manager.clear_and_reset()
-                        print("TODO")
-                        state = "settings"
+                        state = "leaderboard"
+                        leaderboard_return = interface.create_leaderboard_menu(ui_manager, data_store.get_results())
                 elif state == "map_select":
                     if event.ui_element.text == ">":
                         map_index = (map_index + 1) % len(maps.get_available_maps())
-                        map_label.set_text(maps.get_available_maps()[map_index])
+                        map_str = maps.get_available_maps()[map_index].replace("_", " ").title()
+                        icon = pygame.image.load(f"assets/{maps.get_available_maps()[map_index]}.png").convert_alpha()
+                        map_image.set_image(icon)
+                        map_label.set_text(map_str)
                     elif event.ui_element.text == "<":
                         map_index = (map_index - 1) % len(maps.get_available_maps())
-                        map_label.set_text(maps.get_available_maps()[map_index])
+                        map_str = maps.get_available_maps()[map_index].replace("_", " ").title()
+                        icon = pygame.image.load(f"assets/{maps.get_available_maps()[map_index]}.png").convert_alpha()
+                        map_image.set_image(icon)
+                        map_label.set_text(map_str)
                     elif event.ui_element.text == "Powrót":
                         ui_manager.clear_and_reset()
                         state = "menu"
-                        play_button, leaderboard_button, settings_button = interface.create_main_menu(ui_manager)
+                        play_button, leaderboard_button = interface.create_main_menu(ui_manager)
                     elif event.ui_element.text == "Uruchom":
                         ui_manager.clear_and_reset()
                         state = "game"
@@ -139,19 +134,27 @@ def main_loop(window_surface : pygame.surface):
                     elif event.ui_element == exit_to_menu_button:
                         state = "menu"
                         ui_manager.clear_and_reset()
+                        data_store.add_result(simulator.map.map, simulator.user_points)
                         simulator = Simulator() 
-                        play_button, leaderboard_button, settings_button = interface.create_main_menu(ui_manager)
+                        play_button, leaderboard_button = interface.create_main_menu(ui_manager)
                 elif state == "game_over":
                     if event.ui_element == game_over_return_button:
                         state = "menu"
                         ui_manager.clear_and_reset()
 
                         simulator = Simulator() 
-                        play_button, leaderboard_button, settings_button = interface.create_main_menu(ui_manager)
-                elif state == "settings":
-                    pass
+                        play_button, leaderboard_button = interface.create_main_menu(ui_manager)
+                elif state == "leaderboard":
+                    if event.ui_element == leaderboard_return:
+                        state = "menu"
+                        ui_manager.clear_and_reset()
+                        play_button, leaderboard_button = interface.create_main_menu(ui_manager)
+                
+        background_effect.update(time_delta)
                 
         window_surface.fill((0, 0, 0))
+        if state in ["menu", "settings", "map_select", "game_over", "pause", "leaderboard"]:
+            background_effect.draw(window_surface)
         
         if simulator is not None and state != "game_over":
             simulator.update(time_delta)
@@ -159,7 +162,7 @@ def main_loop(window_surface : pygame.surface):
         if state == "game":
             if simulator.user_points < 0:
                 state = "game_over"
-                game_over_return_button = interface.create_game_over_menu(ui_manager, simulator.user_points)
+                game_over_return_button = interface.create_game_over_menu(ui_manager)
             else:
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_LEFT]:
@@ -173,7 +176,7 @@ def main_loop(window_surface : pygame.surface):
 
                 mouse_pos = pygame.mouse.get_pos()
                 
-                renderer.draw_map(window_surface, simulator, (camera_x, camera_y), mouse_pos, selected_positions)
+                renderer.draw_map(window_surface, ui_manager, simulator, (camera_x, camera_y), mouse_pos, selected_positions)
             
         ui_manager.update(time_delta)
         ui_manager.draw_ui(window_surface)

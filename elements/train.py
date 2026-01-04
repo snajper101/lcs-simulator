@@ -16,6 +16,7 @@ class Train():
         self.destination : str = destination
         self.spawned : bool = False
         self.train_type : TrainType = self.draw_train_type()
+        self.train_type_name : str = self.get_train_type_name()
         self.max_speed : int = self.get_max_speed()
         self.speed_limit : int | None = None
         self.move_directions : List[MoveDirection] = []
@@ -24,9 +25,10 @@ class Train():
         self.last_grid_pos : str | None = None
         self.advance_grid_pos : str | None = None
         self.delay = False
-        self.last_update_time = 0
+        self.last_update_time : float = 0
         self.current_route = None
         self.speed_mult : float = 1.0
+        self.train_icon : pygame.image
         self.load_train_icon()
         
     def generate_train_number(self) -> str:
@@ -52,6 +54,14 @@ class Train():
             return 2
         else:
             return 8    
+        
+    def get_train_type_name(self) -> str:
+        if self.train_type == TrainType.PASSENGER:
+            return "pasażerski"
+        elif self.train_type == TrainType.CARGO:
+            return "towarowy"
+        else:
+            return "ekspresowy"
         
     def get_max_speed(self) -> float:
         if self.train_type == TrainType.PASSENGER:
