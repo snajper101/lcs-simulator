@@ -4,6 +4,7 @@ from elements.line_blockade import BlocadeDirection
 from typing import List, Tuple
 from constants import Constants
 import random
+import pygame
 
 class TrainSpawner():
     def __init__(self, simulator, origin_name: str, possible_destinations: List[str], tracks: List[Track]):
@@ -18,6 +19,7 @@ class TrainSpawner():
         self.max_delay = 90.0 / len(self.tracks)
         self.delayed = False
         self.last_spawn_time = 0
+        self.hit_box : pygame.Rect = pygame.Rect(0, 0, 0, 0)
         
     def update(self, simulator, dt: float):
         self.spawn_timer -= dt

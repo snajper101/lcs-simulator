@@ -596,8 +596,8 @@ class GameRenderer:
                                 text_rect = text_surf.get_rect(center=(rect.right - x_size // 2, cy))
                             surface.blit(text_surf, text_rect)
                             text_rect.height = Constants.TILE_SIZE
-                            text_rect.centery = cy
-                            rect = text_rect
+                            text_rect.centery = cy      
+                            rect = train_spawner.hit_box = text_rect
                         elif "Isolation_Shortened_Horizontal_Number" == elem_name:
                             text_surf = self.small_font.render(label_text, True, track_color)
                             text_rect = text_surf.get_rect(center=(cx, cy - 10))
@@ -652,24 +652,11 @@ class GameRenderer:
                 pressed_coord = self.get_coordinates_from_grid(pressed_coord_str)
                 if pressed_coord and rect.collidepoint(pressed_coord):
                     pressed = True
-                    self.draw_object_outline(pressed_coord_str, element, True, rect, (0, 255, 255), pressed_positions.index(pressed_coord_str))
-                    selected_object = simulator.logical_elements.get(coord_str)
-                    if selected_object:
-                        ui_manager.clear_and_reset()
-                        if isinstance(selected_object, TrainSpawner):
-                            interface.create_train_spawner_menu(ui_manager, selected_object)            
-                        elif isinstance(selected_object, Semaphore) and len(pressed_positions) == 2:
-                            if first_object := simulator.logical_elements.get(pressed_positions[0]):
-                                first_semaphore : Semaphore = first_object
-                                advance_semaphore : Semaphore = selected_object
-                                first_semaphore.set_advance_selected_signal(advance_semaphore)
-                                interface.create_actions_menu(ui_manager, first_semaphore)
-                        elif hasattr(selected_object, "actions") and len(selected_object.actions) > 0:
-                            interface.create_actions_menu(ui_manager, selected_object)
+                    self.draw_object_outline(pressed_coord_str, elements[0], True, rect, (0, 255, 255), pressed_positions.index(pressed_coord_str))
                     break
             if not pressed and mouse_pos and rect.collidepoint(mouse_pos):
-                if not "Platform" in elem_name:
-                    self.draw_object_outline(coord_str, element, False, rect, (255, 255, 0)) 
+                if not "Platform" in elements[0].get("Name", ""):
+                    self.draw_object_outline(coord_str, elements[0], False, rect, (255, 255, 0))
         
         for train in self.simulator.active_trains:
             position = self.get_coordinates_from_position(train.position)

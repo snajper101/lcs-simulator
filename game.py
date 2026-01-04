@@ -54,17 +54,39 @@ def main_loop(window_surface : pygame.surface, data_store: DataStore):
                         
             if state == "game":
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
-                        clicked_pos = f"{(event.pos[0] - camera_x) // Constants.TILE_SIZE}-{(event.pos[1] - camera_y) // Constants.TILE_SIZE}"                 
-                        mods = pygame.key.get_mods()
-                        if mods & pygame.KMOD_CTRL:
-                            if clicked_pos in selected_positions:
-                                selected_positions.remove(clicked_pos)
-                            elif len(selected_positions) < 2:
-                                selected_positions.append(clicked_pos)
-                        else:
-                            selected_positions = [clicked_pos]
-                    
+                    if event.button == 1:                        
+                        clicked_pos = f"{(event.pos[0] - camera_x) // Constants.TILE_SIZE}-{(event.pos[1] - camera_y) // Constants.TILE_SIZE}"
+                        selected_object = simulator.logical_elements.get(clicked_pos)
+                        if not selected_object:
+                            for obj in simulator.logical_elements.values():
+                                if isinstance(obj, TrainSpawner) and hasattr(obj, 'hit_box'):
+                                    if obj.hit_box.collidepoint(event.pos):
+                                        selected_object = obj
+                                        clicked_pos = f"{obj.tracks[0].position[0]}-{obj.tracks[0].position[1]}"
+                                        break
+                               
+                        if not ui_manager.get_hovering_any_element():          
+                            mods = pygame.key.get_mods()
+                            if mods & pygame.KMOD_CTRL:
+                                if clicked_pos in selected_positions:
+                                    selected_positions.remove(clicked_pos)
+                                elif len(selected_positions) < 2:
+                                    selected_positions.append(clicked_pos)       
+                                    if len(selected_positions) == 2:
+                                        first_object = simulator.logical_elements.get(selected_positions[0])
+                                        second_object = simulator.logical_elements.get(selected_positions[1])
+                                        if isinstance(first_object, Semaphore) and isinstance(second_object, Semaphore):
+                                            first_object.set_advance_selected_signal(second_object)
+                                            ui_manager.clear_and_reset()
+                                            interface.create_actions_menu(ui_manager, first_object)
+                            else:
+                                selected_positions = [clicked_pos]
+                                if selected_object:
+                                    ui_manager.clear_and_reset()
+                                    if isinstance(selected_object, TrainSpawner):
+                                        interface.create_train_spawner_menu(ui_manager, selected_object)
+                                    elif hasattr(selected_object, "actions") and len(selected_object.actions) > 0:
+                                        interface.create_actions_menu(ui_manager, selected_object)        
                     if event.button == 2:
                         is_dragging = True
                         last_mouse_pos = event.pos

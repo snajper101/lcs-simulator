@@ -694,7 +694,7 @@ SCHEMA = {
     ],
     "43-9": [{"Name": "SignalReapeter_East", "TextLabels": {"Index": "St_A3_Tm132"}}],
     "19-7": [
-        {"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "Jz32_33/11"}}
+        {"Name": "Isolation_Horizontal", "TextLabels": {"IsolationName": "Jz32_33/10"}}
     ],
     "16-8": [
         {"Name": "Isolation_Vertical", "TextLabels": {"IsolationName": "Jz34_36/20"}}
