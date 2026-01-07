@@ -538,6 +538,7 @@ class GameRenderer:
                         ]
                         pygame.draw.polygon(surface, track_color, curve)
                 elif "TrainEnd_" in elem_name:
+                    tileSizeHalf = Constants.TILE_SIZE // 2
                     if semaphore and semaphore.ending_route:
                         color = (255, 0, 0)
                     else:
